@@ -10,6 +10,7 @@
 - Add modules and dependencies when they contain real functionality. Do not add infrastructure without a demonstrated requirement.
 - Preserve capability-aware configuration: the shell, liveness, tests, and build need no production credentials. Never fake provider success.
 - Before handoff run lint, format check, typecheck, unit tests, and production build. Keep existing design documents out of automatic formatting.
+- Maintain `docs/PROJECT-STATUS.md` as the ongoing project progress record. Read it before major feature work; add or update an entry whenever a major feature is built or materially advanced, in the same change as the implementation. Record the status, delivered scope, validation, and remaining limitations. Preserve completed milestones and distinguish working features from illustrative previews; mark work complete only when its stated scope is delivered.
 
 Approved product clarifications and deferred work are recorded in README.md. This scaffold does not authorize feature implementation.
 
