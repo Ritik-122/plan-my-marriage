@@ -1,6 +1,8 @@
 # Plan My Marriage
 
-Engineering foundation for a Next.js App Router modular monolith. This commit scope contains a minimal shell and liveness endpoint, not wedding features or authentication.
+Next.js App Router modular monolith with a public landing page based on the approved Stitch design and a liveness endpoint. Landing-page workspaces, invitations, galleries, and vendor listings use illustrative data. Product actions show a “Coming soon” dialog; authentication and wedding features are not implemented yet.
+
+Landing sections live in `src/components/landing`; shared interactions provide responsive navigation and an accessible native dialog. Images and fonts are served locally from `public/landing`, so builds require no external asset requests or provider credentials.
 
 ## Local development
 

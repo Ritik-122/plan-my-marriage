@@ -12,3 +12,4 @@ test-results/
 .npm-cache/
 npm-debug.log*
 .DS_Store
+.vscode/

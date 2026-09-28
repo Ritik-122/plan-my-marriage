@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Minimal geometric symbol representing two interlocking architectural arch forms / partnership / P+M monogram in deep muted burgundy and warm terracotta -->
+  <rect width="100" height="100" rx="22" fill="#FAF7F2"/>
+  <path d="M34 68V42C34 33.1634 41.1634 26 50 26C58.8366 26 66 33.1634 66 42V68" stroke="#641B2E" stroke-width="7" stroke-linecap="round"/>
+  <path d="M42 68V48C42 43.5817 45.5817 40 50 40C54.4183 40 58 43.5817 58 48V68" stroke="#C86D51" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="50" cy="53" r="3.5" fill="#641B2E"/>
+</svg>
