@@ -1,6 +1,6 @@
 # Plan My Marriage
 
-Next.js App Router modular monolith with a public landing page based on the approved Stitch design and a liveness endpoint. Landing-page workspaces, invitations, galleries, and vendor listings use illustrative data. Product actions show a “Coming soon” dialog; authentication and wedding features are not implemented yet.
+Next.js App Router modular monolith with a public landing page, email/password accounts, and a protected welcome screen. Landing-page workspaces, invitations, galleries, and vendor listings remain illustrative. Sign In and Start Planning open real account flows; other product actions show a “Coming soon” dialog.
 
 Landing sections live in `src/components/landing`; shared interactions provide responsive navigation and an accessible native dialog. Images and fonts are served locally from `public/landing`, so builds require no external asset requests or provider credentials.
 
@@ -21,6 +21,21 @@ TypeScript stays on the compatible 6.x release because the lint parser does not 
 
 ESLint 10 uses the official `@eslint/compat` wrapper for the older rule-context APIs used by Next's React plugin. Remove that wrapper when the upstream plugin supports ESLint 10 directly.
 
+## Account setup
+
+Keep credentials in the ignored `.env.local` file, never `.env.example`. If you do not already have `.env.local`, create it using `.env.example` as a template. Set:
+
+- `MONGODB_URI`: your MongoDB connection string.
+- `MONGODB_DB_NAME`: the database you intend to use.
+- `SESSION_SECRET`: a random private secret of at least 32 characters. Use a different secret in production.
+- `APP_BASE_URL`: the exact browser origin, normally `http://localhost:3000` locally and your HTTPS URL in production. Requests from other origins are rejected.
+
+Generate a session secret with `node -e "console.log(require('node:crypto').randomBytes(48).toString('base64url'))"`. Restart the server after changing environment variables.
+
+Run `npm run db:auth-indexes` once against each configured database before using a production build. This explicitly creates the unique email index and rate-limit TTL index. It does not remove existing data or indexes. Registration refuses to proceed without a full unique email index. Development also uses the scaffold's automatic index creation.
+
+The homepage, signed-out account forms, liveness endpoint, unit tests, and build work without MongoDB credentials. Account submissions return a safe 503 when configuration/storage is unavailable.
+
 ## Checks
 
 ```sh
@@ -40,16 +55,37 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Playwright builds and starts the production server on port 3100. It is not part of initial CI; meaningful product journeys will be added as features arrive.
+The landing-page browser checks build and start a production server on port 3100. To exercise accounts and the landing page against a disposable real MongoDB instance, run `npm run test:auth` after installing Playwright Chromium. This builds the app and starts an isolated server on port 3111; it never uses your configured MongoDB URI. The first run/install downloads a local MongoDB binary. The fixture stops the server and database after testing. Browser suites are opt-in and are not in the foundation CI workflow.
+
+## Account behavior
+
+- `/sign-up`, `/sign-in`, and `/app` provide registration, login, and the protected welcome screen. Signed-in visitors to either account form go to `/app`; signed-out visitors to `/app` go to `/sign-in`.
+- `/api/v1/auth/register`, `/login`, `/logout`, and `/me` under the same auth prefix follow the API design. Responses serialize only the user ID, display name, and normalized email. Registration returns 201; logout returns 204.
+- Passwords use salted bcrypt at cost 12. Registration requires at least 12 characters; both forms reject input over bcrypt's 72-byte UTF-8 limit without truncation.
+- HS256-signed sessions expire after seven days. Cookies are HttpOnly, SameSite=Lax, scoped to `/`, and Secure on HTTPS. Production authentication requires HTTPS except for local testing. Every protected read checks the user and `sessionVersion` in MongoDB. Logout clears this browser's cookie; it does not revoke a previously copied token. Incrementing `sessionVersion` invalidates all sessions for that user.
+- State-changing account endpoints validate Origin/Referer against `APP_BASE_URL`. Requests are never authenticated using browser localStorage.
+- Shared MongoDB rate limits allow 10 registration requests or 30 login requests per IP per 15-minute window, plus 8 login attempts per IP/email pair. Counters use HMAC fingerprints rather than raw identities. Vercel's overwritten forwarding header supplies IPs on Vercel; elsewhere a conservative shared bucket is used. Another hosting provider needs an explicitly trusted ingress adapter before deployment. See [Vercel's header contract](https://vercel.com/docs/headers/request-headers).
+- Google sign-in, password recovery, email verification, and team invitations are later milestones. The workspace lists real weddings belonging to the signed-in user.
+
+## Wedding setup
+
+- `/app/weddings/new` follows the Stitch three-step flow: details, theme, review. Creation saves the wedding and its first Admin membership in one MongoDB transaction. Atlas or a replica set is required.
+- Drafts are stored only in this browser, scoped to the signed-in user, and restored for seven days. Save & Exit does not create a database record. Final creation clears the draft.
+- The three themes preview the future guest experience. They do not change the planning workspace. Dates use Asia/Kolkata; handles are normalized and unique, checked at creation, and immutable afterward.
+- `/app` lists membership-scoped weddings. The protected overview and edit pages support persisted details and theme changes for Admins and Managers.
+- `GET/POST /api/v1/weddings` and `GET/PATCH /api/v1/weddings/:weddingId` implement this increment. PATCH accepts core details and theme only; publishing settings, uploads, invitations, and ceremony planning remain deferred. Guest websites start unpublished.
+- Run `npm run db:wedding-indexes` once per configured database before using creation. It explicitly applies unique slug and membership indexes plus date and membership-list indexes. Missing unique indexes prevent creation safely. Mutation limits are 10 creates and 60 updates per user per 15 minutes.
+- `npm run test:auth` includes wedding integration checks using a disposable MongoDB replica set, including duplicate races, access isolation, and rollback on membership failure. It never uses the configured application database for test records.
 
 ## Foundation boundaries
 
-- `src/app`: pages and thin API Route Handlers. Only `/` and `/api/v1/health` are implemented.
-- `src/lib/config/env.server.ts`: server-only Zod validation. Application settings have development defaults. MongoDB settings are validated only when requested. Future provider placeholders are not consumed yet.
-- `src/lib/db/mongoose.ts`: lazy connection reuse, concurrent-attempt sharing, retry after failure, bounded pool, and disabled production auto-indexing. No domain models or index application occurs yet.
+- `src/app`: public landing and account pages, the protected `/app` welcome page, thin authentication Route Handlers, and `/api/v1/health`.
+- `src/modules/auth`: input schemas, explicit user DTOs, model/repository, bcrypt password handling, signed sessions, account services, request protection, and shared rate limits.
+- `src/lib/config/env.server.ts`: server-only Zod validation. Application settings have development defaults. MongoDB and session settings are validated only when needed. Future provider placeholders are not consumed yet.
+- `src/lib/db/mongoose.ts`: lazy connection reuse, concurrent-attempt sharing, retry after failure, bounded pool, and disabled production auto-indexing. Authentication owns its models; `scripts/auth-indexes.mjs` applies its production indexes explicitly.
 - `src/lib/http`: public error types, API envelopes, and server-generated request IDs. Unknown errors produce a generic 500 without internal details. Responses default to `no-store`; explicit public caching can be designed later.
 - `src/lib/logging`: Pino structured logs. Request completion uses an allowlist and a fixed event message; secret-key redaction is defense in depth, not permission to log arbitrary objects or free-form errors.
-- `tests`: Node unit-test setup and an optional shell browser smoke test. Database unit tests use mocks; they do not claim Atlas integration coverage.
+- `tests`: Node unit tests, landing browser checks, and isolated account browser/API integration tests. Mock-based unit tests and disposable local MongoDB tests do not claim Atlas integration coverage.
 
 Health returns HTTP 200 with `data.status = "ok"` and `meta.requestId`, plus `X-Request-Id` and `Cache-Control: no-store`. It does not import/connect to MongoDB, call external providers, or reveal configuration. It is **liveness**, not readiness.
 
@@ -83,7 +119,7 @@ Approved clarifications for later work:
 - Resend initially handles transactional invitations only.
 - Prefer `weddings/{weddingId}/photos/{uuid}.{ext}` for future media keys; `Photo.eventId` determines categorization.
 
-No session, password hashing, R2, CDN, Resend, QR, rate-limiter implementation, or vendor integration is included. Install feature packages only when implementing their approved capability.
+R2, CDN, Resend, QR, wedding workflows, and vendor integrations remain deferred. Install feature packages only when implementing their approved capability.
 
 ## Deployment
 

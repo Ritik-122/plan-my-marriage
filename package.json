@@ -16,9 +16,14 @@
     "format:check": "prettier --check .",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:auth": "npm run build && playwright test --config playwright.auth.config.ts",
+    "db:auth-indexes": "node scripts/auth-indexes.mjs --apply",
+    "db:wedding-indexes": "node scripts/wedding-indexes.mjs --apply"
   },
   "dependencies": {
+    "bcryptjs": "3.0.3",
+    "jose": "6.2.12",
     "mongoose": "9.10.2",
     "next": "16.3.6",
     "pino": "10.3.1",
@@ -37,6 +42,7 @@
     "eslint": "10.11.0",
     "eslint-config-next": "16.3.6",
     "eslint-config-prettier": "10.1.8",
+    "mongodb-memory-server": "11.3.0",
     "prettier": "3.9.9",
     "tailwindcss": "4.3.3",
     "typescript": "6.0.3",

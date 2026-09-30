@@ -1,4 +1,4 @@
-import { ComingSoonButton } from "./interactions";
+import Link from "next/link";
 
 export function Hero() {
   return (
@@ -24,9 +24,12 @@ export function Hero() {
             scattered spreadsheets.
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-4 mb-4">
-            <ComingSoonButton className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 rounded-full bg-primary-container text-on-primary font-label-lg text-label-lg shadow-md hover:bg-primary transition-all">
+            <Link
+              href="/sign-up"
+              className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 rounded-full bg-primary-container text-on-primary font-label-lg text-label-lg shadow-md hover:bg-primary transition-all"
+            >
               Start Planning — Free
-            </ComingSoonButton>
+            </Link>
             <a
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full bg-surface-container-lowest text-on-surface font-label-lg text-label-lg shadow-sm hover:bg-surface-container transition-all"
               href="#how-it-works"

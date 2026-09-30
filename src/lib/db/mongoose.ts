@@ -1,6 +1,7 @@
 import "server-only";
 import mongoose from "mongoose";
 import { getMongoConfig } from "@/lib/config/env.server";
+import { HttpError } from "@/lib/http/errors";
 
 type ConnectionCache = { pending: Promise<typeof mongoose> | null };
 const globalForMongo = globalThis as typeof globalThis & {
@@ -25,6 +26,14 @@ export async function connectMongo(): Promise<typeof mongoose> {
   const pending = cache.pending;
   try {
     return await pending;
+  } catch {
+    // DNS failures may be plain Node errors, rather than Mongo-prefixed errors.
+    // Never expose the underlying error: it can contain the cluster address.
+    throw new HttpError(
+      503,
+      "PROVIDER_UNAVAILABLE",
+      "Database service is temporarily unavailable. Please try again later.",
+    );
   } finally {
     // Failed attempts can retry; concurrent callers share the same attempt.
     if (cache.pending === pending) cache.pending = null;

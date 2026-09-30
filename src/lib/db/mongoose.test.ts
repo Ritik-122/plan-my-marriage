@@ -31,7 +31,12 @@ describe("lazy MongoDB connection", () => {
       .mockRejectedValueOnce(new Error("unavailable"))
       .mockResolvedValueOnce(mocks);
     const { connectMongo } = await import("./mongoose");
-    await expect(connectMongo()).rejects.toThrow("unavailable");
+    await expect(connectMongo()).rejects.toMatchObject({
+      status: 503,
+      code: "PROVIDER_UNAVAILABLE",
+      message:
+        "Database service is temporarily unavailable. Please try again later.",
+    });
     await expect(connectMongo()).resolves.toBe(mocks);
     expect(mocks.connect).toHaveBeenCalledTimes(2);
   });
@@ -41,5 +46,24 @@ describe("lazy MongoDB connection", () => {
     const { connectMongo } = await import("./mongoose");
     await expect(connectMongo()).resolves.toBe(mocks);
     expect(mocks.connect).not.toHaveBeenCalled();
+  });
+
+  it("sanitizes plain DNS errors without leaking connection details", async () => {
+    mocks.connect.mockRejectedValueOnce(
+      Object.assign(
+        new Error("querySrv ECONNREFUSED private-cluster.example"),
+        {
+          code: "ECONNREFUSED",
+          syscall: "querySrv",
+        },
+      ),
+    );
+    const { connectMongo } = await import("./mongoose");
+    await expect(connectMongo()).rejects.toMatchObject({
+      status: 503,
+      code: "PROVIDER_UNAVAILABLE",
+      message:
+        "Database service is temporarily unavailable. Please try again later.",
+    });
   });
 });

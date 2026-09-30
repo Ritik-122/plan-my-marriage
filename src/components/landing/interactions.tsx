@@ -1,6 +1,7 @@
 "use client";
 
-import Image from "next/image";
+import Link from "next/link";
+import { Brand } from "@/components/brand";
 import {
   createContext,
   useContext,
@@ -67,27 +68,6 @@ export function ComingSoonButton({
   );
 }
 
-function Brand() {
-  return (
-    <a
-      href="#home"
-      aria-label="Plan My Marriage home"
-      className="flex shrink-0 items-center gap-2 text-primary"
-    >
-      <Image
-        src="/landing/logo.svg"
-        alt=""
-        width={32}
-        height={32}
-        className="shrink-0"
-      />
-      <span className="font-headline-md text-lg sm:text-headline-md">
-        Plan My Marriage
-      </span>
-    </a>
-  );
-}
-
 export function LandingHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   return (
@@ -99,7 +79,7 @@ export function LandingHeader() {
         Skip to content
       </a>
       <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-between gap-4 px-margin">
-        <Brand />
+        <Brand href="#home" />
         <nav
           aria-label="Main navigation"
           className="hidden items-center gap-6 lg:flex"
@@ -115,12 +95,12 @@ export function LandingHeader() {
           ))}
         </nav>
         <div className="hidden items-center gap-4 lg:flex">
-          <ComingSoonButton className="px-2 py-3 text-label-lg">
+          <Link href="/sign-in" className="px-2 py-3 text-label-lg">
             Sign In
-          </ComingSoonButton>
-          <ComingSoonButton className={primaryButton}>
+          </Link>
+          <Link href="/sign-up" className={primaryButton}>
             Start Planning — Free
-          </ComingSoonButton>
+          </Link>
         </div>
         <button
           className="rounded-lg border border-outline-variant px-3 py-2 text-label-lg lg:hidden"
@@ -151,12 +131,12 @@ export function LandingHeader() {
             </a>
           ))}
           <div className="mt-3 flex flex-wrap items-center gap-4">
-            <ComingSoonButton className="px-2 py-3 text-label-lg">
+            <Link href="/sign-in" className="px-2 py-3 text-label-lg">
               Sign In
-            </ComingSoonButton>
-            <ComingSoonButton className={primaryButton}>
+            </Link>
+            <Link href="/sign-up" className={primaryButton}>
               Start Planning — Free
-            </ComingSoonButton>
+            </Link>
           </div>
         </nav>
       )}
@@ -170,7 +150,7 @@ export function LandingFooter() {
       <div className="mx-auto max-w-[1440px]">
         <div className="flex flex-col justify-between gap-10 md:flex-row">
           <div>
-            <Brand />
+            <Brand href="#home" />
             <p className="mt-4 max-w-sm text-body-md text-on-surface-variant">
               One calm place for every celebration, every family member, and
               every little detail.

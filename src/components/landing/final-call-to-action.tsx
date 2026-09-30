@@ -1,4 +1,4 @@
-import { ComingSoonButton } from "./interactions";
+import Link from "next/link";
 
 export function FinalCallToAction() {
   return (
@@ -20,9 +20,12 @@ export function FinalCallToAction() {
               into one calm, architectural workspace.
             </p>
             <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
-              <ComingSoonButton className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 rounded-full bg-secondary-container text-on-secondary-container font-label-lg text-label-lg shadow-md hover:bg-white hover:text-primary transition-all font-bold">
+              <Link
+                href="/sign-up"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 rounded-full bg-secondary-container text-on-secondary-container font-label-lg text-label-lg shadow-md hover:bg-white hover:text-primary transition-all font-bold"
+              >
                 Start Planning — Free
-              </ComingSoonButton>
+              </Link>
               <a
                 className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 rounded-full bg-white/10 text-white font-label-lg text-label-lg hover:bg-white/20 transition-all"
                 href="#workspace-preview"

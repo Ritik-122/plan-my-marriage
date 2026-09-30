@@ -48,3 +48,23 @@ export function getAppConfig(environment: Environment = process.env) {
 export function getMongoConfig(environment: Environment = process.env) {
   return parseConfig(mongoSchema, environment, "MongoDB");
 }
+
+export function getSessionConfig(environment: Environment = process.env) {
+  const config = parseConfig(
+    z.object({ SESSION_SECRET: z.string().min(32).max(1024) }),
+    environment,
+    "session",
+  );
+  const base = new URL(getAppConfig(environment).APP_BASE_URL);
+  const local =
+    ["localhost", "127.0.0.1", "[::1]"].includes(base.hostname) &&
+    environment.VERCEL !== "1";
+  if (
+    environment.NODE_ENV === "production" &&
+    base.protocol !== "https:" &&
+    !local
+  ) {
+    throw new ConfigurationError("session", ["APP_BASE_URL (HTTPS required)"]);
+  }
+  return config;
+}

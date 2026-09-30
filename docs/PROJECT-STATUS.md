@@ -6,7 +6,7 @@ This file tracks delivery; product requirements and architecture remain governed
 
 ## Current status
 
-The engineering scaffold and public homepage are implemented. The homepage is a product preview with illustrative data. Authentication and functional wedding planning features are not implemented yet.
+The engineering scaffold, public homepage, email/password authentication, and three-step wedding setup are implemented. The protected workspace now lists real weddings with overview and editing. The homepage's planning content remains illustrative; ceremony planning is a subsequent milestone.
 
 ## Milestones
 
@@ -33,11 +33,47 @@ Delivered:
 - Locally served images, logo, and fonts with included font licenses.
 - Browser tests for navigation, dialog behavior, image loading, and viewport overflow at 320, 375, 768, and 1440 pixels.
 
-Validation: Lint, format check, typecheck, all 13 unit tests, and production build passed during review. Browser tests could not start during that review because port 3100 was already occupied; their passing status remains unverified.
+Validation: Lint, format check, typecheck, all 13 foundation unit tests, and production build passed during the original review. The homepage browser regression checks subsequently passed as part of milestone 3's combined 10-test suite, including all four viewport sizes.
 
-Limitations: Workspace, invitation, gallery, and vendor content is illustrative. Calls to action do not create accounts or weddings, submit RSVPs, upload photos, or contact vendors.
+Limitations: Workspace, invitation, gallery, and vendor content is illustrative. Wedding creation, RSVP, uploads, and vendor contact remain deferred. Account calls to action now open the working flows delivered in milestone 3.
 
 Implementation commit: `a4a26d5` — `feat: add public wedding planning landing page`.
+
+### 3. Accounts and protected welcome — Complete
+
+Delivered:
+
+- Stitch-based responsive sign-in page and matching sign-up page using the original logo, shared typography, and arch motif.
+- Homepage account links now lead to `/sign-in` and `/sign-up`.
+- Registration, login, logout, and current-user APIs with normalized email, explicit user DTOs, validation, duplicate-email handling, and generic credential errors.
+- Salted bcrypt password hashing, signed seven-day HttpOnly sessions, HTTPS Secure cookies, server-side user/session-version checks, and a protected `/app` welcome page.
+- Same-origin mutation checks, bounded JSON request bodies, MongoDB-backed rate limits, and safe unavailable responses.
+- User and rate-limit models, explicit production index setup, and ignored local configuration for MongoDB and the session secret. The tracked environment template contains no credentials.
+- Unit tests and an isolated browser/API suite using disposable real MongoDB, without connecting to the configured application database.
+
+Validation: Production build, lint, TypeScript, formatting, and all 28 unit tests passed. All 10 combined browser/API tests passed against disposable real MongoDB: registration, session persistence, sign-out/sign-in, protected redirects, safe user serialization, duplicate-registration races, invalid credentials, forged cookies, origin checks, invalid input, rate limiting, responsive account pages, and homepage regressions. The configured MongoDB connection was also verified and both authentication indexes were successfully applied; no test accounts were created in that database.
+
+Limitations: End-to-end account journeys were verified against isolated local MongoDB, not the configured live cluster. Deployment remains unverified. Each additional database needs `npm run db:auth-indexes`. Google sign-in, password recovery, email verification, wedding creation, and team workflows remain deferred. Logout clears the current browser cookie; copied tokens remain valid until expiry or a user session-version change.
+
+### 4. Wedding setup — Complete
+
+Delivered:
+
+- Responsive Stitch-based three-step wizard: wedding details, three theme previews, and editable review before creation.
+- Validated names, India-local calendar date, city, welcome note, and normalized unique website handle. Availability is checked on creation; duplicate handles return a recoverable field error.
+- User-scoped browser drafts, Save & Exit, resume, and discard. Drafts are restored for seven days and cleared after successful creation.
+- MongoDB wedding and first Admin membership created atomically; explicit unique indexes and authenticated, membership-authorized list/read/update APIs.
+- Real wedding list, protected overview, and details/theme editing. Websites start unpublished; handles stay fixed after creation.
+
+Validation: Production build, lint, formatting, TypeScript, and all 35 unit tests passed. The 10 existing account/homepage browser checks passed; both new wedding integration tests passed after correcting test locators/navigation waits. The new tests cover draft recovery, mobile/desktop layouts for all three steps, creation and edit persistence, membership isolation, duplicate-handle races, sparse updates, immutable fields, and real transaction rollback on membership failure. Screenshots were visually reviewed. Four wedding indexes were successfully applied to the configured database without creating test weddings.
+
+Limitations: Browser/API write tests use a disposable MongoDB replica set, not the configured live cluster. Deployment remains unverified. Drafts are local to one browser, not synchronized across devices. Theme cards are previews; guest publishing, photos, invitations/team management, and ceremonies remain future increments. Each additional database needs `npm run db:wedding-indexes`; transactions require Atlas or another replica set.
+
+### Local sign-up connectivity fix — Complete
+
+The local preview had been launched in a network-restricted sandbox. MongoDB SRV DNS resolution timed out (`querySrv`, `ETIMEOUT`) after approximately 46 seconds, and the plain Node error incorrectly became HTTP 500. The same configured connection succeeded with network access. Restarted the preview with network access and normalized connection failures to a sanitized HTTP 503, preserving connection retry behavior.
+
+Validation: Registration on the repaired local server against the configured database returned 201, the resulting session returned 200, and logout returned 204. The generated temporary verification account was removed immediately; existing accounts were untouched. Added a DNS-error regression test. All 36 unit tests, lint, formatting, TypeScript, and production build passed.
 
 ## Maintaining this record
 

@@ -6,13 +6,19 @@ test("landing navigation and coming-soon dialog work", async ({ page }) => {
     page.getByRole("heading", { name: "Plan the wedding. Together." }),
   ).toBeVisible();
   const trigger = page
-    .getByRole("button", { name: "Start Planning — Free" })
+    .getByRole("button", { name: "Preview invitation theme" })
     .first();
   await trigger.click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).not.toBeVisible();
   await expect(trigger).toBeFocused();
+  await expect(
+    page.getByRole("link", { name: "Start Planning — Free" }).first(),
+  ).toHaveAttribute("href", "/sign-up");
+  await expect(
+    page.getByRole("link", { name: "Sign In", exact: true }).first(),
+  ).toHaveAttribute("href", "/sign-in");
   await page
     .getByRole("navigation", { name: "Main navigation", exact: true })
     .getByRole("link", { name: "Themes" })
@@ -38,19 +44,21 @@ for (const width of [320, 375, 768, 1440]) {
       ).toHaveAttribute("aria-expanded", "false");
     }
     await page.locator("#memories").scrollIntoViewIfNeeded();
-    await expect
-      .poll(() =>
-        page
-          .locator("#memories img")
-          .evaluateAll((images) =>
-            images.every(
-              (image) =>
-                (image as HTMLImageElement).complete &&
-                (image as HTMLImageElement).naturalWidth > 0,
+    for (const image of await page.locator("#memories img").all()) {
+      // Bring each lazy image into view, including the lower row on mobile.
+      await image.scrollIntoViewIfNeeded();
+      await expect
+        .poll(
+          () =>
+            image.evaluate(
+              (element) =>
+                (element as HTMLImageElement).complete &&
+                (element as HTMLImageElement).naturalWidth > 0,
             ),
-          ),
-      )
-      .toBe(true);
+          { timeout: 10000 },
+        )
+        .toBe(true);
+    }
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth),
     ).toBeLessThanOrEqual(width);
