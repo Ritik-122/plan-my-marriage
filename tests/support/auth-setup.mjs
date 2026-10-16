@@ -7,6 +7,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { applyAuthIndexes } from "../../scripts/auth-indexes.mjs";
 import { applyWeddingIndexes } from "../../scripts/wedding-indexes.mjs";
 import { applyEventIndexes } from "../../scripts/event-indexes.mjs";
+import { applyGuestIndexes } from "../../scripts/guest-indexes.mjs";
 
 export default async function setup() {
   // Never reuse an existing server: it could be connected to a real database.
@@ -38,6 +39,7 @@ export default async function setup() {
     await applyAuthIndexes(mongoose.connection.db);
     await applyWeddingIndexes(mongoose.connection.db);
     await applyEventIndexes(mongoose.connection.db);
+    await applyGuestIndexes(mongoose.connection.db);
     await mongoose.disconnect();
     next = spawn(
       process.execPath,

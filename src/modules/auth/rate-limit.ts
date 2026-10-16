@@ -90,3 +90,8 @@ export async function limitEventRequests(userId: string) {
   await connectMongo();
   await increment(userId, "events:mutate", 60);
 }
+
+export async function limitGuestRequests(userId: string) {
+  await connectMongo();
+  await increment(userId, "guests:mutate", 120);
+}

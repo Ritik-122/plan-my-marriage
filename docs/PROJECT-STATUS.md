@@ -6,7 +6,7 @@ This file tracks delivery; product requirements and architecture remain governed
 
 ## Current status
 
-The engineering scaffold, public homepage, email/password authentication, three-step wedding setup, and ceremony/event management are implemented. The protected workspace lists real weddings with overview, editing, and chronological event schedules. Homepage planning content remains illustrative; guest assignment and invitations are subsequent milestones.
+The engineering scaffold, public homepage, email/password authentication, wedding setup, event management, and guest management with event assignments are implemented. The workspace now connects weddings, chronological schedules, and guest directories. Invitation delivery and guest RSVP submission are subsequent milestones; homepage planning content remains illustrative.
 
 ## Milestones
 
@@ -90,6 +90,20 @@ Validation: Production build, TypeScript, lint, formatting, and all 40 unit test
 Configured-database follow-up: After Atlas connectivity was restored, `npm run db:event-indexes` succeeded. The running local preview also completed its database-backed login rate-limit check and returned the expected 400 validation response for an empty request. No accounts, weddings, or events were created or changed during this verification.
 
 Limitations: Guest counts, RSVP, tasks, expenses, photo uploads, publishing, calendar/PDF export, and invitation delivery depicted in Stitch remain future increments. No event-specific photo assets or sample guest statistics are presented as real data. Each additional database needs `npm run db:event-indexes`.
+
+### 6. Guest management and event assignments — Complete
+
+Delivered:
+
+- Guest List, Add/Edit Guest, and Guest Details based on the new Stitch screens, with shared wedding navigation, responsive layouts, empty states, actual counts, search, event filtering, and cursor pagination.
+- Required guest name; optional normalized email/phone and organizer-only notes. Names are not unique. Event checkboxes and selection preview; details show saved assignments without claiming invitations were sent.
+- Membership-authorized guest CRUD and event-assignment APIs, explicit DTOs, tenant-scoped lookups, bounded validation, literal search, rate limits, and six explicit indexes. API group references are validated against the same wedding; group-management UI remains deferred.
+- Transactional idempotent assignment preserving existing RSVP state. Parent writes serialize assignments with guest/event removal. Guest deletion removes assignments and revokes associated access tokens atomically.
+- Recoverable partial form saves: guest details and assignments follow separate documented APIs; a failed assignment retains the saved guest ID, shows the error, and retries without duplicating the guest. Initial creation with an unknown outcome requires checking the directory before another attempt.
+
+Validation: Production build, TypeScript, lint, formatting, and all 45 unit tests passed. All 16 combined browser/API tests passed against a disposable replica set, covering responsive screens, validation, normalized contacts, partial-save recovery without duplicate guests, assignment edits, search/event filters, confirmed deletion, cross-wedding isolation, literal search, cursor pagination, assignment rollback, idempotent/concurrent assignment, RSVP preservation, Manager access, token revocation, and concurrent guest deletion without orphan assignments. Mobile and desktop screenshots were visually reviewed. The configured Atlas connection succeeded and all six guest/assignment indexes were applied without creating test guests.
+
+Limitations: Family/group UI, invitations, delivery, RSVP submission, import/export, and bulk guest actions remain future increments. Guests can be saved without contact information or event assignments. Removing an assignment deletes its RSVP state and requires confirmation in the editor. Each additional database requires `npm run db:guest-indexes`.
 
 ## Maintaining this record
 

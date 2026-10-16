@@ -7,9 +7,11 @@ export const eventButton =
 export function EventShell({
   wedding,
   children,
+  active = "events",
 }: {
   wedding: WeddingDTO;
   children: React.ReactNode;
+  active?: "events" | "guests";
 }) {
   const base = `/app/weddings/${wedding.id}`;
   return (
@@ -36,10 +38,17 @@ export function EventShell({
           </Link>
           <Link
             href={`${base}/events`}
-            aria-current="page"
-            className="rounded-lg bg-primary-container px-4 py-3 text-label-lg text-white"
+            aria-current={active === "events" ? "page" : undefined}
+            className={`rounded-lg px-4 py-3 text-label-lg ${active === "events" ? "bg-primary-container text-white" : ""}`}
           >
             Events
+          </Link>
+          <Link
+            href={`${base}/guests`}
+            aria-current={active === "guests" ? "page" : undefined}
+            className={`rounded-lg px-4 py-3 text-label-lg ${active === "guests" ? "bg-primary-container text-white" : ""}`}
+          >
+            Guests
           </Link>
           <Link href="/app" className="rounded-lg px-4 py-3 text-label-lg">
             Your weddings

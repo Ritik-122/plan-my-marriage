@@ -88,6 +88,16 @@ The wedding overview links to `/app/weddings/:weddingId/events`: a chronological
 - Updates and deletions use MongoDB transactions. Deletion removes event guest assignments, revokes photo upload tokens, detaches preserved tasks/expenses, and deletes the event last. Events with photo metadata return 409 until storage cleanup is implemented; this increment never deletes photo objects.
 - `npm run test:auth` includes the event browser/API suite using a disposable replica set. No real wedding data is needed for these tests.
 
+## Guests and event assignments
+
+- `/app/weddings/:weddingId/guests` provides the Stitch-based guest directory, literal name/email/phone search, event filter, cursor pagination, Add/Edit Guest, details, and confirmed removal. Existing wedding navigation links to Guests.
+- Guest names are required and are not unique. Email/phone/organizer-only notes are optional. Email is trimmed/lowercased; phone punctuation is removed and the remaining number must contain 7–15 digits with an optional leading `+`. No country code is guessed.
+- Guest CRUD follows `/api/v1/weddings/:weddingId/guests[/:guestId]`. Listing defaults to 20 and caps at 100, sorts by name then ID, and returns `meta.nextCursor`. Supported filters are `q`, `groupId`, `eventId`, and event-scoped `rsvpStatus`. Group-management UI is deferred; API group references must already belong to the wedding.
+- Event assignment GET/POST/DELETE follows `/api/v1/weddings/:weddingId/events/:eventId/guests`; POST/DELETE accepts up to 100 `guestIds`. GET `/api/v1/weddings/:weddingId/guests/:guestId/events` returns assigned events. Membership is required for every read/write; both linked records must belong to the same wedding. Mutations are limited to 120 per user per 15 minutes.
+- Assignments use separate `eventGuests` records with a unique event/guest index. New RSVP state is PENDING; repeat assignment preserves existing responses. Transactions serialize assignments with parent deletion. Removing an assignment also removes that event's RSVP state. Removing a guest deletes assignments and revokes their guest-access tokens atomically.
+- The form saves guest details then applies changed assignments through the existing event APIs. If an assignment fails, it keeps the saved guest ID and reports partial completion; Save retries the remaining changes without creating another guest. If initial creation cannot be confirmed, it directs the organizer to check the directory before attempting another creation.
+- Run `npm run db:guest-indexes` per database before assignment use. Invitations, delivery, RSVP submission, family/group management, import/export, and bulk guest actions remain separate milestones. The UI makes no claim that selecting an event sends an invitation.
+
 ## Foundation boundaries
 
 - `src/app`: public landing and account pages, the protected `/app` welcome page, thin authentication Route Handlers, and `/api/v1/health`.

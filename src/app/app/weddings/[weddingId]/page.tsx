@@ -52,6 +52,12 @@ export default async function Overview({
               >
                 Manage events →
               </Link>
+              <Link
+                href={`/app/weddings/${wedding.id}/guests`}
+                className="mt-5 ml-3 inline-block rounded-lg border border-outline-variant px-5 py-3 text-label-lg text-primary"
+              >
+                Manage guests →
+              </Link>
             </section>
             <section className="rounded-xl bg-white p-6 shadow-sm">
               <h2 className="text-title-md text-primary">Welcome note</h2>
