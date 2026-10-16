@@ -6,7 +6,7 @@ This file tracks delivery; product requirements and architecture remain governed
 
 ## Current status
 
-The engineering scaffold, public homepage, email/password authentication, and three-step wedding setup are implemented. The protected workspace now lists real weddings with overview and editing. The homepage's planning content remains illustrative; ceremony planning is a subsequent milestone.
+The engineering scaffold, public homepage, email/password authentication, three-step wedding setup, and ceremony/event management are implemented. The protected workspace lists real weddings with overview, editing, and chronological event schedules. Homepage planning content remains illustrative; guest assignment and invitations are subsequent milestones.
 
 ## Milestones
 
@@ -74,6 +74,22 @@ Limitations: Browser/API write tests use a disposable MongoDB replica set, not t
 The local preview had been launched in a network-restricted sandbox. MongoDB SRV DNS resolution timed out (`querySrv`, `ETIMEOUT`) after approximately 46 seconds, and the plain Node error incorrectly became HTTP 500. The same configured connection succeeded with network access. Restarted the preview with network access and normalized connection failures to a sanitized HTTP 503, preserving connection retry behavior.
 
 Validation: Registration on the repaired local server against the configured database returned 201, the resulting session returned 200, and logout returned 204. The generated temporary verification account was removed immediately; existing accounts were untouched. Added a DNS-error regression test. All 36 unit tests, lint, formatting, TypeScript, and production build passed.
+
+### 5. Ceremony and event management — Complete
+
+Delivered:
+
+- Schedule, Add/Edit Event, and event details based on the three new Stitch designs. Responsive sidebar/navigation, real summary counts, chronological event cards, empty state, form preview, validation, saving states, and explicit delete confirmation.
+- Event name/type, description, optional dress code, India-local start/end times, optional venue/address/map link, and Public/Invite-only visibility (default Invite-only).
+- Membership-authorized event APIs, tenant-scoped queries, explicit DTOs, ISO range filters, safe URL validation, sparse/nested PATCH handling, and mutation rate limits. Date-range validation also considers stored values on partial updates.
+- Transactional deletion removes event assignments, revokes upload tokens, detaches preserved tasks/expenses, and deletes the event last. Photo-bearing events are blocked until storage cleanup is supported.
+- Event index deployment script and isolated database/browser coverage. Wedding overview now links to Manage events.
+
+Validation: Production build, TypeScript, lint, formatting, and all 40 unit tests passed. The 12 existing browser/API checks passed, and both new event checks passed after correcting the test to click the visible event-type label. Event API integration covers cross-wedding access rejection, Manager edits, invalid/partial times, sorting/filtering, nested venue merges, photo deletion blocking, and dependency cleanup. Browser testing covers create/reload/edit, schedule navigation, delete cancellation/confirmation, and all three screens at 320px/1440px without overflow. Captured mobile and desktop layouts were visually reviewed. All write tests used a disposable replica set.
+
+Configured-database follow-up: After Atlas connectivity was restored, `npm run db:event-indexes` succeeded. The running local preview also completed its database-backed login rate-limit check and returned the expected 400 validation response for an empty request. No accounts, weddings, or events were created or changed during this verification.
+
+Limitations: Guest counts, RSVP, tasks, expenses, photo uploads, publishing, calendar/PDF export, and invitation delivery depicted in Stitch remain future increments. No event-specific photo assets or sample guest statistics are presented as real data. Each additional database needs `npm run db:event-indexes`.
 
 ## Maintaining this record
 

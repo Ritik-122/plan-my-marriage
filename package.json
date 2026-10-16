@@ -19,7 +19,8 @@
     "test:e2e": "playwright test",
     "test:auth": "npm run build && playwright test --config playwright.auth.config.ts",
     "db:auth-indexes": "node scripts/auth-indexes.mjs --apply",
-    "db:wedding-indexes": "node scripts/wedding-indexes.mjs --apply"
+    "db:wedding-indexes": "node scripts/wedding-indexes.mjs --apply",
+    "db:event-indexes": "node scripts/event-indexes.mjs --apply"
   },
   "dependencies": {
     "bcryptjs": "3.0.3",

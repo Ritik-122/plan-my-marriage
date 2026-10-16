@@ -40,12 +40,18 @@ export default async function Overview({
           <div className="space-y-6 md:col-span-2">
             <section className="rounded-xl bg-white p-6 shadow-sm">
               <h2 className="font-headline-md text-headline-md text-primary">
-                Your shared beginning
+                Your wedding celebrations
               </h2>
               <p className="mt-3 text-body-md text-on-surface-variant">
-                Your wedding has been saved. Ceremony planning is the next
-                feature—we’ll build your schedule here as it becomes available.
+                Plan your ceremonies, family gatherings, and celebrations in one
+                schedule.
               </p>
+              <Link
+                href={`/app/weddings/${wedding.id}/events`}
+                className="mt-5 inline-block rounded-lg bg-primary-container px-5 py-3 text-label-lg text-white"
+              >
+                Manage events →
+              </Link>
             </section>
             <section className="rounded-xl bg-white p-6 shadow-sm">
               <h2 className="text-title-md text-primary">Welcome note</h2>

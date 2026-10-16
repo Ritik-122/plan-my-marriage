@@ -77,6 +77,17 @@ The landing-page browser checks build and start a production server on port 3100
 - Run `npm run db:wedding-indexes` once per configured database before using creation. It explicitly applies unique slug and membership indexes plus date and membership-list indexes. Missing unique indexes prevent creation safely. Mutation limits are 10 creates and 60 updates per user per 15 minutes.
 - `npm run test:auth` includes wedding integration checks using a disposable MongoDB replica set, including duplicate races, access isolation, and rollback on membership failure. It never uses the configured application database for test records.
 
+## Ceremony and event management
+
+The wedding overview links to `/app/weddings/:weddingId/events`: a chronological schedule, empty state, Add/Edit form, event details, and explicit deletion confirmation. The three Stitch event screens guide the layout. Desktop and mobile use the existing brand, colors, and fonts. Only implemented navigation and real saved data are shown.
+
+- Authenticated Admins and Managers can list, create, read, edit, and delete their wedding's events. All event queries include the wedding ID after membership authorization. Mutations require the configured origin and share a 60-request/user/15-minute limit.
+- Event types are `HALDI`, `MEHENDI`, `SANGEET`, `WEDDING`, `RECEPTION`, and `CUSTOM`. Forms interpret date/time inputs in Asia/Kolkata and store UTC. End time is optional and must be later than start time, including sparse PATCH updates. Nested venue PATCH fields merge; `endsAt: null` clears the end time.
+- Visibility is `PUBLIC` or `INVITED_ONLY`, defaulting to `INVITED_ONLY`, per the approved product clarification. This saves intent; it does not publish the website or send invitations. Dress code is editable; the API also accepts an optional external livestream URL. Photo uploads, guest assignment, RSVP, tasks, budgets, calendar/PDF export, and publishing are deferred.
+- GET list supports inclusive `from`/`to` ISO timestamp filters on start time. Run `npm run db:event-indexes` for each database to apply `{ weddingId: 1, startsAt: 1 }`.
+- Updates and deletions use MongoDB transactions. Deletion removes event guest assignments, revokes photo upload tokens, detaches preserved tasks/expenses, and deletes the event last. Events with photo metadata return 409 until storage cleanup is implemented; this increment never deletes photo objects.
+- `npm run test:auth` includes the event browser/API suite using a disposable replica set. No real wedding data is needed for these tests.
+
 ## Foundation boundaries
 
 - `src/app`: public landing and account pages, the protected `/app` welcome page, thin authentication Route Handlers, and `/api/v1/health`.

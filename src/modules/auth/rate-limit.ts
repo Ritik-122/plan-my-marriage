@@ -85,3 +85,8 @@ export async function limitWeddingRequests(
   await connectMongo();
   await increment(userId, `weddings:${action}`, action === "create" ? 10 : 60);
 }
+
+export async function limitEventRequests(userId: string) {
+  await connectMongo();
+  await increment(userId, "events:mutate", 60);
+}
