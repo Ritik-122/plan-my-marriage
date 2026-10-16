@@ -95,3 +95,12 @@ export async function limitGuestRequests(userId: string) {
   await connectMongo();
   await increment(userId, "guests:mutate", 120);
 }
+
+export async function limitInvitationRead(request: Request) {
+  await connectMongo();
+  await increment(clientIdentity(request), "invitations:read", 300);
+}
+export async function limitInvitationCreation(userId: string) {
+  await connectMongo();
+  await increment(userId, "invitations:create", 60);
+}

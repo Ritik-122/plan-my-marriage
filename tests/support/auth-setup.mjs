@@ -8,6 +8,7 @@ import { applyAuthIndexes } from "../../scripts/auth-indexes.mjs";
 import { applyWeddingIndexes } from "../../scripts/wedding-indexes.mjs";
 import { applyEventIndexes } from "../../scripts/event-indexes.mjs";
 import { applyGuestIndexes } from "../../scripts/guest-indexes.mjs";
+import { applyInvitationIndexes } from "../../scripts/invitation-indexes.mjs";
 
 export default async function setup() {
   // Never reuse an existing server: it could be connected to a real database.
@@ -40,6 +41,7 @@ export default async function setup() {
     await applyWeddingIndexes(mongoose.connection.db);
     await applyEventIndexes(mongoose.connection.db);
     await applyGuestIndexes(mongoose.connection.db);
+    await applyInvitationIndexes(mongoose.connection.db);
     await mongoose.disconnect();
     next = spawn(
       process.execPath,

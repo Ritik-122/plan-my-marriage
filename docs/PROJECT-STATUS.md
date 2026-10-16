@@ -6,7 +6,7 @@ This file tracks delivery; product requirements and architecture remain governed
 
 ## Current status
 
-The engineering scaffold, public homepage, email/password authentication, wedding setup, event management, and guest management with event assignments are implemented. The workspace now connects weddings, chronological schedules, and guest directories. Invitation delivery and guest RSVP submission are subsequent milestones; homepage planning content remains illustrative.
+The engineering scaffold, public homepage, email/password authentication, wedding setup, event management, guest management with event assignments, and personalized guest invitation links are implemented. The workspace now connects weddings, chronological schedules, guest directories, and private themed invitations. Email delivery and guest RSVP submission are subsequent milestones; homepage planning content remains illustrative.
 
 ## Milestones
 
@@ -104,6 +104,19 @@ Delivered:
 Validation: Production build, TypeScript, lint, formatting, and all 45 unit tests passed. All 16 combined browser/API tests passed against a disposable replica set, covering responsive screens, validation, normalized contacts, partial-save recovery without duplicate guests, assignment edits, search/event filters, confirmed deletion, cross-wedding isolation, literal search, cursor pagination, assignment rollback, idempotent/concurrent assignment, RSVP preservation, Manager access, token revocation, and concurrent guest deletion without orphan assignments. Mobile and desktop screenshots were visually reviewed. The configured Atlas connection succeeded and all six guest/assignment indexes were applied without creating test guests.
 
 Limitations: Family/group UI, invitations, delivery, RSVP submission, import/export, and bulk guest actions remain future increments. Guests can be saved without contact information or event assignments. Removing an assignment deletes its RSVP state and requires confirmation in the editor. Each additional database requires `npm run db:guest-indexes`.
+
+### 7. Personalized guest invitation links — Complete
+
+Delivered:
+
+- Fetched the Stitch guest invitation, expired/revoked link, and updated Guest Details designs. Added a responsive private-link panel, organizer preview, and accountless guest invitation with the wedding's saved Classic Indian, Modern Minimal, or Royal Indian theme.
+- Generate a private link with configurable expiration in IST, copy it once, open WhatsApp for manual sharing, inspect issued-link metadata, and confirm revocation. Multiple links can remain active; existing URLs cannot be recovered after leaving the page. Sharing does not claim delivery.
+- Membership-authorized link APIs, 256-bit random capabilities, SHA-256-only persistence, explicit unique indexes, and transactional creation serialized with guest deletion. Guest-token access is independent of account sessions and only exposes that guest's assigned events, dates, dress codes, venues, map/livestream links, and safe wedding presentation fields.
+- Generic invalid/expired/revoked state, separate retryable unavailable state, no-store responses, no-referrer/noindex guest pages, static application log routes, and suppressed development request logs for capability paths. Organizer preview creates no token. Guest deletion revokes issued capabilities.
+
+Validation: Production build, TypeScript, lint, formatting, and all 48 unit tests passed. All 18 combined browser/API tests passed against disposable MongoDB, including hash-only storage, metadata allowlisting, contact/note privacy, accountless access, session/capability separation, origin protection, guest/wedding scope, multiple active links, assignment changes, expiration, revocation, guest deletion, preview without issuance, reload without raw-link recovery, confirmation cancellation, response privacy headers, and all three themes at 320px/1440px without overflow. Screenshots were visually reviewed. Both invitation indexes were successfully applied to the configured Atlas database without creating guests or invitation links.
+
+Limitations: RSVP submission, email delivery, and public website publishing remain later increments. WhatsApp sharing requires the organizer to send the message. `APP_BASE_URL` must point to a publicly reachable deployment for guests on other devices; localhost links are local only. Expired metadata is retained. Revocation blocks future reads but cannot erase already-viewed content. Hosting/proxy/analytics capability-path redaction must be configured before deployment; deployment remains unverified. Each additional database requires `npm run db:invitation-indexes`.
 
 ## Maintaining this record
 

@@ -9,6 +9,7 @@ import {
   VisibilityBadge,
 } from "@/components/events/event-shell";
 import { DeleteGuest } from "@/components/guests/delete-guest";
+import { InvitationPanel } from "@/components/invitations/invitation-panel";
 export const metadata = { title: "Guest details | Plan My Marriage" };
 export default async function GuestPage({
   params,
@@ -86,15 +87,13 @@ export default async function GuestPage({
               {guest.notes || "No private notes added."}
             </p>
           </section>
-          <section className="rounded-xl border border-outline-variant/40 p-6">
-            <h2 className="text-title-lg text-primary">
-              Invitations come next
-            </h2>
-            <p className="mt-3 text-body-sm text-on-surface-variant">
-              These assignments are saved for planning. Personalized invitation
-              links and RSVP responses will be available in a later milestone.
-            </p>
-          </section>
+          <InvitationPanel
+            weddingId={weddingId}
+            guestId={guestId}
+            defaultExpiry={new Date(
+              Date.parse(wedding.weddingDate) + 7 * 86400000,
+            ).toISOString()}
+          />
         </div>
         <section className="min-w-0 rounded-xl bg-white p-6 shadow-sm">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
