@@ -41,6 +41,9 @@ export default async function EventPage({
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
+          <Link className={eventButton} href={`${base}/${eventId}/guests`}>
+            Guests &amp; RSVPs
+          </Link>
           <DeleteEvent
             weddingId={weddingId}
             eventId={eventId}
@@ -111,7 +114,7 @@ export default async function EventPage({
           <p className="mt-4 text-body-md text-on-surface-variant">
             {event.visibility === "PUBLIC"
               ? "This event is eligible to appear on your wedding’s public website when publishing becomes available."
-              : "This event is reserved for guests assigned to it. Guest assignments and invitations will be available in a later milestone."}
+              : "This event is reserved for guests assigned to it. Manage their invitations and responses from Guests & RSVPs."}
           </p>
           <p className="mt-4 text-body-sm">
             Your wedding website remains unpublished.

@@ -6,7 +6,7 @@ This file tracks delivery; product requirements and architecture remain governed
 
 ## Current status
 
-The engineering scaffold, public homepage, email/password authentication, wedding setup, event management, guest management with event assignments, and personalized guest invitation links are implemented. The workspace now connects weddings, chronological schedules, guest directories, and private themed invitations. Email delivery and guest RSVP submission are subsequent milestones; homepage planning content remains illustrative.
+The engineering scaffold, public homepage, email/password authentication, wedding setup, event management, guest management with event assignments, personalized guest invitation links, and guest RSVP are implemented. Guests can respond to assigned events and organizers can review event-level attendance. Email delivery remains a subsequent milestone; homepage planning content remains illustrative.
 
 ## Milestones
 
@@ -117,6 +117,19 @@ Delivered:
 Validation: Production build, TypeScript, lint, formatting, and all 48 unit tests passed. All 18 combined browser/API tests passed against disposable MongoDB, including hash-only storage, metadata allowlisting, contact/note privacy, accountless access, session/capability separation, origin protection, guest/wedding scope, multiple active links, assignment changes, expiration, revocation, guest deletion, preview without issuance, reload without raw-link recovery, confirmation cancellation, response privacy headers, and all three themes at 320px/1440px without overflow. Screenshots were visually reviewed. Both invitation indexes were successfully applied to the configured Atlas database without creating guests or invitation links.
 
 Limitations: RSVP submission, email delivery, and public website publishing remain later increments. WhatsApp sharing requires the organizer to send the message. `APP_BASE_URL` must point to a publicly reachable deployment for guests on other devices; localhost links are local only. Expired metadata is retained. Revocation blocks future reads but cannot erase already-viewed content. Hosting/proxy/analytics capability-path redaction must be configured before deployment; deployment remains unverified. Each additional database requires `npm run db:invitation-indexes`.
+
+### 8. Guest RSVP and organizer attendance — Complete
+
+Delivered:
+
+- Used the three new Stitch designs for invitation RSVP controls, response confirmation, and event guest attendance. Guests select Attending or Not attending for each assigned event, confirm, review their saved summary, and return to edit. Reopening a private link restores saved responses. All existing wedding themes remain supported.
+- Added `PATCH /api/v1/guest/rsvps` with strict validation, bounded unique event batches, capability authorization independent of account sessions, origin checks, rate limits, sanitized errors, and no-store responses. Changes update existing event assignments atomically; invalid assignments roll back the batch. Unchanged retries preserve response timestamps. Guest/assignment deletion and token revocation serialize against response writes; expiration is checked before the final token write.
+- Event Details links to Guests & RSVPs: actual total/Attending/Not attending/Pending counts, name/contact search, status filtering, cursor pagination, response timestamps, guest-detail links, and manual refresh. Summary counts are independent of filters. Guest Details also shows per-event RSVP badges.
+- Failed saves preserve selections without claiming success. Removed assignments offer an explicit reload/discard action; invalid capabilities use the existing unavailable-link screen. Mobile rows stack guest details above status/actions, and the status selector has an explicit accessible label.
+
+Validation: Production build, TypeScript, lint, formatting, and all 50 unit tests passed. The combined browser/API run passed 19 checks; the remaining RSVP browser journey passed on its targeted rerun after selector, accessibility-label, and mobile-layout fixes. Coverage includes atomic rollback, idempotent timestamps, response edits/reload, account-cookie rejection, capability expiry/revocation, origin protection, unassigned-event rejection, failed-save recovery, organizer filters, stale-assignment recovery, and 320px/1440px layouts. Screenshots were visually reviewed. All write tests used disposable MongoDB; no live guest responses were changed.
+
+Limitations: Email delivery/reminders, exports, guest-count questionnaires, dietary questions, RSVP deadlines, organizer response overrides, and live polling remain deferred. Existing guest/assignment indexes support this feature; no additional database setup is required. Deployment remains unverified.
 
 ## Maintaining this record
 

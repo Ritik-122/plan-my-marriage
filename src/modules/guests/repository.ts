@@ -87,6 +87,24 @@ export async function listRecords(weddingId: string, filters: GuestFilters) {
   return {
     data: page.map((g) => ({
       ...guestDTO(g),
+      ...(filters.eventId
+        ? {
+            rsvpStatus:
+              assignments.find(
+                (a) =>
+                  a.guestId.equals(g._id) &&
+                  a.eventId.toString() === filters.eventId?.toLowerCase(),
+              )?.rsvpStatus ?? "PENDING",
+            respondedAt:
+              assignments
+                .find(
+                  (a) =>
+                    a.guestId.equals(g._id) &&
+                    a.eventId.toString() === filters.eventId?.toLowerCase(),
+                )
+                ?.respondedAt?.toISOString() ?? null,
+          }
+        : {}),
       events: events
         .filter((e) =>
           assignments.some(
@@ -103,6 +121,28 @@ export async function listRecords(weddingId: string, filters: GuestFilters) {
         : null,
     matched,
     total: await Guest.countDocuments({ weddingId }),
+  };
+}
+export async function eventResponseCounts(weddingId: string, eventId: string) {
+  const rows = await EventGuest.aggregate<{ _id: string; count: number }>([
+    {
+      $match: {
+        weddingId: new mongoose.Types.ObjectId(weddingId),
+        eventId: new mongoose.Types.ObjectId(eventId),
+      },
+    },
+    { $group: { _id: "$rsvpStatus", count: { $sum: 1 } } },
+  ]);
+  const count = (status: string) =>
+    rows.find((r) => r._id === status)?.count ?? 0;
+  const attending = count("ATTENDING"),
+    notAttending = count("NOT_ATTENDING"),
+    pending = count("PENDING");
+  return {
+    attending,
+    notAttending,
+    pending,
+    total: attending + notAttending + pending,
   };
 }
 export async function getRecord(weddingId: string, guestId: string) {

@@ -100,6 +100,11 @@ export async function limitInvitationRead(request: Request) {
   await connectMongo();
   await increment(clientIdentity(request), "invitations:read", 300);
 }
+export async function limitRsvpRequests(request: Request, tokenHash: string) {
+  await connectMongo();
+  await increment(clientIdentity(request), "rsvp:ip", 300);
+  await increment(tokenHash, "rsvp:token", 60);
+}
 export async function limitInvitationCreation(userId: string) {
   await connectMongo();
   await increment(userId, "invitations:create", 60);

@@ -5,6 +5,12 @@ import { connectMongo } from "@/lib/db/mongoose";
 import { HttpError } from "@/lib/http/errors";
 import { createToken, hashToken, tokenPattern } from "./token";
 import * as repository from "./repository";
+import type { RsvpInput } from "./schema";
+export async function submitRsvps(token: string, input: RsvpInput) {
+  if (!tokenPattern.test(token)) throw repository.invalidLink();
+  await connectMongo();
+  return repository.saveResponses(hashToken(token), input);
+}
 export async function createLink(
   userId: string,
   weddingId: string,

@@ -98,6 +98,290 @@ async function setup(request: APIRequestContext, slug: string) {
   };
 }
 const expiresAt = () => new Date(Date.now() + 86400000).toISOString();
+test("RSVP writes are atomic, idempotent and limited to valid assigned capabilities", async ({
+  request,
+  playwright,
+}) => {
+  const { guest, base, events, path } = await setup(request, "rsvp-api");
+  const issued = (
+    await (
+      await request.post(path, { headers, data: { expiresAt: expiresAt() } })
+    ).json()
+  ).data;
+  const token = new URL(issued.url).pathname.split("/").at(-1)!;
+  const auth = { ...headers, Authorization: `Bearer ${token}` };
+  const anon = await playwright.request.newContext({ baseURL: headers.Origin });
+  const data = { responses: [{ eventId: events[0].id, status: "ATTENDING" }] };
+  try {
+    expect(
+      (await request.patch("/api/v1/guest/rsvps", { headers, data })).status(),
+    ).toBe(401);
+    expect(
+      (
+        await anon.patch("/api/v1/guest/rsvps", {
+          headers: { ...auth, Origin: "https://evil.example" },
+          data,
+        })
+      ).status(),
+    ).toBe(403);
+    for (const body of [
+      { responses: [] },
+      { responses: [...data.responses, ...data.responses] },
+      { responses: [{ eventId: events[0].id, status: "PENDING" }] },
+      { ...data, guestId: guest.id },
+    ])
+      expect(
+        (
+          await anon.patch("/api/v1/guest/rsvps", { headers: auth, data: body })
+        ).status(),
+      ).toBe(400);
+    expect(
+      (
+        await anon.patch("/api/v1/guest/rsvps", {
+          headers: auth,
+          data: {
+            responses: [
+              ...data.responses,
+              { eventId: events[1].id, status: "ATTENDING" },
+            ],
+          },
+        })
+      ).status(),
+    ).toBe(403);
+    const context = async () =>
+      (
+        await (
+          await anon.get("/api/v1/guest/invitation", { headers: auth })
+        ).json()
+      ).data;
+    expect((await context()).events[0].rsvpStatus).toBe("PENDING");
+    const first = await anon.patch("/api/v1/guest/rsvps", {
+      headers: auth,
+      data,
+    });
+    expect(first.status()).toBe(200);
+    const result = (await first.json()).data;
+    expect(result.responses[0].respondedAt).toBeTruthy();
+    expect(
+      (
+        await (
+          await anon.patch("/api/v1/guest/rsvps", { headers: auth, data })
+        ).json()
+      ).data,
+    ).toEqual(result);
+    expect((await context()).events[0].rsvpStatus).toBe("ATTENDING");
+    const list = (
+      await (
+        await request.get(
+          `${base}/events/${events[0].id}/guests?rsvpStatus=ATTENDING`,
+        )
+      ).json()
+    ).data;
+    expect(list).toHaveLength(1);
+    expect(list[0].rsvpStatus).toBe("ATTENDING");
+    expect(list[0].respondedAt).toBe(result.responses[0].respondedAt);
+    const changed = {
+      responses: [{ eventId: events[0].id, status: "NOT_ATTENDING" }],
+    };
+    expect(
+      (
+        await anon.patch("/api/v1/guest/rsvps", {
+          headers: auth,
+          data: changed,
+        })
+      ).status(),
+    ).toBe(200);
+    expect((await context()).events[0].rsvpStatus).toBe("NOT_ATTENDING");
+    await request.delete(`${base}/events/${events[0].id}/guests`, {
+      headers,
+      data: { guestIds: [guest.id] },
+    });
+    expect(
+      (
+        await anon.patch("/api/v1/guest/rsvps", { headers: auth, data })
+      ).status(),
+    ).toBe(403);
+    await request.post(`${base}/events/${events[0].id}/guests`, {
+      headers,
+      data: { guestIds: [guest.id] },
+    });
+    const tokens = mongoose.connection.db!.collection("guestAccessTokens");
+    await tokens.updateOne(
+      { _id: new mongoose.Types.ObjectId(issued.accessTokenId) },
+      { $set: { expiresAt: new Date(0) } },
+    );
+    expect(
+      (
+        await anon.patch("/api/v1/guest/rsvps", { headers: auth, data })
+      ).status(),
+    ).toBe(401);
+    await tokens.updateOne(
+      { _id: new mongoose.Types.ObjectId(issued.accessTokenId) },
+      { $set: { expiresAt: new Date(Date.now() + 86400000) } },
+    );
+    await request.delete(`${path}/${issued.accessTokenId}`, { headers });
+    expect(
+      (
+        await anon.patch("/api/v1/guest/rsvps", { headers: auth, data })
+      ).status(),
+    ).toBe(401);
+    const remaining = (
+      await (await request.get(`${base}/events/${events[0].id}/guests`)).json()
+    ).data;
+    expect(remaining[0].rsvpStatus).toBe("PENDING");
+  } finally {
+    await anon.dispose();
+  }
+});
+
+test("guests confirm and edit RSVPs, recover a save failure, and organizers filter real responses", async ({
+  page,
+  context,
+  browser,
+}) => {
+  const { wedding, base, guest, events, path } = await setup(
+    context.request,
+    "rsvp-ui",
+  );
+  const issued = (
+    await (
+      await context.request.post(path, {
+        headers,
+        data: { expiresAt: expiresAt() },
+      })
+    ).json()
+  ).data;
+  const guestContext = await browser.newContext();
+  try {
+    const guestPage = await guestContext.newPage();
+    await guestPage.goto(issued.url);
+    await guestPage.getByRole("button", { name: "Confirm responses" }).click();
+    await expect(guestPage.getByRole("main").getByRole("alert")).toContainText(
+      "each celebration",
+    );
+    await guestPage
+      .getByRole("radio", { name: "Attending", exact: true })
+      .check();
+    await guestPage.route(
+      "**/api/v1/guest/rsvps",
+      async (route) => {
+        await route.fulfill({
+          status: 503,
+          contentType: "application/json",
+          body: JSON.stringify({
+            error: { message: "Temporary save failure" },
+          }),
+        });
+      },
+      { times: 1 },
+    );
+    await guestPage.getByRole("button", { name: "Confirm responses" }).click();
+    await expect(guestPage.getByRole("main").getByRole("alert")).toContainText(
+      "Temporary save failure",
+    );
+    await expect(
+      guestPage.getByRole("radio", { name: "Attending", exact: true }),
+    ).toBeChecked();
+    for (const width of [320, 1440]) {
+      await guestPage.setViewportSize({ width, height: 900 });
+      expect(
+        await guestPage.evaluate(() => document.documentElement.scrollWidth),
+      ).toBeLessThanOrEqual(width);
+      await guestPage.screenshot({
+        path: `test-results/rsvp-form-${width}.png`,
+        fullPage: true,
+      });
+    }
+    await guestPage.getByRole("button", { name: "Confirm responses" }).click();
+    await expect(
+      guestPage.getByRole("heading", { name: "Thank you, Rajesh Sharma." }),
+    ).toBeVisible();
+    for (const width of [320, 1440]) {
+      await guestPage.setViewportSize({ width, height: 900 });
+      expect(
+        await guestPage.evaluate(() => document.documentElement.scrollWidth),
+      ).toBeLessThanOrEqual(width);
+      await guestPage.screenshot({
+        path: `test-results/rsvp-confirmation-${width}.png`,
+        fullPage: true,
+      });
+    }
+    await guestPage
+      .getByRole("button", { name: "Edit responses", exact: true })
+      .click();
+    await guestPage
+      .getByRole("radio", { name: "Not attending", exact: true })
+      .check();
+    await guestPage.getByRole("button", { name: "Confirm responses" }).click();
+    await expect(
+      guestPage.getByText("Your responses have been saved."),
+    ).toBeVisible();
+    await guestPage.reload();
+    await expect(
+      guestPage.getByRole("radio", { name: "Not attending", exact: true }),
+    ).toBeChecked();
+    const organizer = `/app/weddings/${wedding.id}/events/${events[0].id}/guests`;
+    await page.goto(organizer);
+    await expect(
+      page.getByRole("heading", { name: "Sangeet Night Guests" }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Rajesh Sharma", { exact: true }),
+    ).toBeVisible();
+    for (const width of [320, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth),
+      ).toBeLessThanOrEqual(width);
+      await page.screenshot({
+        path: `test-results/rsvp-organizer-${width}.png`,
+        fullPage: true,
+      });
+    }
+    await page
+      .getByLabel("RSVP status", { exact: true })
+      .selectOption("ATTENDING");
+    await page.getByRole("button", { name: "Apply filters" }).click();
+    await expect(
+      page.getByText("No guests match this view.", { exact: false }),
+    ).toBeVisible();
+    await page
+      .getByLabel("RSVP status", { exact: true })
+      .selectOption("NOT_ATTENDING");
+    await page.getByRole("button", { name: "Apply filters" }).click();
+    await expect(
+      page.getByText("Rajesh Sharma", { exact: true }),
+    ).toBeVisible();
+    // A stale form cannot recreate an assignment removed by an organizer.
+    await context.request.delete(`${base}/events/${events[0].id}/guests`, {
+      headers,
+      data: { guestIds: [guest.id] },
+    });
+    await guestPage
+      .getByRole("radio", { name: "Attending", exact: true })
+      .check();
+    await guestPage.getByRole("button", { name: "Confirm responses" }).click();
+    await expect(
+      guestPage.getByRole("button", {
+        name: "Reload invitation (discard edits)",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await guestPage
+      .getByRole("button", {
+        name: "Reload invitation (discard edits)",
+        exact: true,
+      })
+      .click();
+    await expect(
+      guestPage.getByText("Your celebration details are being arranged.", {
+        exact: false,
+      }),
+    ).toBeVisible();
+  } finally {
+    await guestContext.close();
+  }
+});
 test("invitation capabilities preserve privacy, scope, expiration and revocation", async ({
   request,
   playwright,

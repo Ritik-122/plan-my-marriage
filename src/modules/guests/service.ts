@@ -4,6 +4,14 @@ import { getEvent } from "@/modules/events/service";
 import { guestDTO } from "./dto";
 import * as repository from "./repository";
 import type { GuestInput, GuestUpdate, GuestFilters } from "./schema";
+export async function eventRsvpCounts(
+  userId: string,
+  weddingId: string,
+  eventId: string,
+) {
+  await getEvent(userId, weddingId, eventId);
+  return repository.eventResponseCounts(weddingId, eventId);
+}
 function validId(id: string) {
   if (!/^[a-f\d]{24}$/i.test(id)) throw repository.missingGuest();
 }

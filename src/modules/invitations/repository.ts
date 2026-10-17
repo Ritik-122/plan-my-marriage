@@ -6,6 +6,59 @@ import { WeddingEvent } from "@/modules/events/model";
 import { HttpError } from "@/lib/http/errors";
 import { GuestAccessToken } from "./model";
 import { invitationDTO, linkDTO } from "./dto";
+import type { RsvpInput } from "./schema";
+export async function saveResponses(tokenHash: string, input: RsvpInput) {
+  return mongoose.connection.transaction(async (session) => {
+    const valid = () => ({
+      tokenHash,
+      revokedAt: null,
+      expiresAt: { $gt: new Date() },
+    });
+    const token = await GuestAccessToken.findOne(valid())
+      .session(session)
+      .lean();
+    if (!token) throw invalidLink();
+    const scope = { weddingId: token.weddingId, guestId: token.guestId };
+    // Serialize with guest deletion and event-assignment edits before touching the token.
+    const guest = await Guest.updateOne(
+      { _id: token.guestId, weddingId: token.weddingId },
+      { $inc: { __v: 1 } },
+      { session },
+    );
+    if (!guest.matchedCount) throw invalidLink();
+    const responses = [];
+    for (const response of input.responses) {
+      const assignment = await EventGuest.findOne({
+        ...scope,
+        eventId: response.eventId,
+      }).session(session);
+      if (!assignment)
+        throw new HttpError(
+          403,
+          "FORBIDDEN",
+          "Your event assignments have changed. Reload your invitation before responding.",
+        );
+      if (assignment.rsvpStatus !== response.status) {
+        assignment.rsvpStatus = response.status;
+        assignment.respondedAt = new Date();
+        await assignment.save({ session });
+      }
+      responses.push({
+        eventId: response.eventId,
+        status: assignment.rsvpStatus,
+        respondedAt: assignment.respondedAt?.toISOString() ?? null,
+      });
+    }
+    // A concurrent revocation conflicts with this write; expired tokens cannot commit responses.
+    const used = await GuestAccessToken.updateOne(
+      valid(),
+      { $set: { lastUsedAt: new Date() } },
+      { session },
+    );
+    if (!used.matchedCount) throw invalidLink();
+    return { responses };
+  });
+}
 export const invalidLink = () =>
   new HttpError(
     401,

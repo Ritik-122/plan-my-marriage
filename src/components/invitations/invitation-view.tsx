@@ -1,9 +1,10 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { Brand } from "@/components/brand";
 import type { InvitationDTO } from "@/modules/invitations/dto";
 import { eventDate, eventTime } from "@/modules/events/schema";
 import { themeNames } from "@/modules/weddings/schema";
-const palettes = {
+export const palettes = {
   CLASSIC_INDIAN:
     "bg-[#fcf7f3] text-[#691b32] [--invite-accent:#691b32] [--invite-tint:#f7ede5] [--invite-border:#e8d4ca]",
   MODERN_MINIMAL:
@@ -27,9 +28,13 @@ function safeExternal(url: string | null) {
 export function InvitationView({
   invitation,
   previewBack,
+  responseControl,
+  responseFooter,
 }: {
   invitation: InvitationDTO;
   previewBack?: string;
+  responseControl?: (event: InvitationDTO["events"][number]) => ReactNode;
+  responseFooter?: ReactNode;
 }) {
   const { guest, wedding, events } = invitation;
   return (
@@ -177,10 +182,12 @@ export function InvitationView({
                     Watch livestream ↗
                   </a>
                 )}
+                {responseControl?.(event)}
               </li>
             ))}
           </ol>
         </section>
+        {responseFooter}
         <aside className="mt-6 rounded-xl bg-[var(--invite-tint)] p-5 text-xs leading-6">
           <h2 className="font-semibold">
             Thoughtfully Yours &amp; Confidential

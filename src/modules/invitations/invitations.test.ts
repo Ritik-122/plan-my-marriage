@@ -1,6 +1,41 @@
 import { describe, expect, it } from "vitest";
 import { createToken, hashToken, tokenPattern } from "./token";
-import { createLinkSchema } from "./schema";
+import { createLinkSchema, rsvpSchema } from "./schema";
+describe("RSVP validation", () => {
+  const eventId = "a".repeat(24);
+  it("accepts only explicit per-event attendance choices", () => {
+    expect(
+      rsvpSchema.safeParse({ responses: [{ eventId, status: "ATTENDING" }] })
+        .success,
+    ).toBe(true);
+    for (const input of [
+      { responses: [] },
+      { responses: [{ eventId, status: "PENDING" }] },
+      { responses: [{ eventId: "bad", status: "ATTENDING" }] },
+      { responses: [{ eventId, status: "ATTENDING", guestCount: 3 }] },
+      { responses: [{ eventId, status: "ATTENDING" }], guestId: eventId },
+    ])
+      expect(rsvpSchema.safeParse(input).success).toBe(false);
+  });
+  it("rejects duplicate event IDs including differently cased IDs and bounds batches", () => {
+    expect(
+      rsvpSchema.safeParse({
+        responses: [
+          { eventId, status: "ATTENDING" },
+          { eventId: eventId.toUpperCase(), status: "NOT_ATTENDING" },
+        ],
+      }).success,
+    ).toBe(false);
+    expect(
+      rsvpSchema.safeParse({
+        responses: Array.from({ length: 101 }, (_, i) => ({
+          eventId: i.toString(16).padStart(24, "0"),
+          status: "ATTENDING",
+        })),
+      }).success,
+    ).toBe(false);
+  });
+});
 describe("private invitation tokens", () => {
   it("creates distinct 256-bit tokens and stores only a SHA-256 digest", () => {
     const a = createToken();

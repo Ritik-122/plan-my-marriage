@@ -10,6 +10,7 @@ import {
 } from "@/components/events/event-shell";
 import { DeleteGuest } from "@/components/guests/delete-guest";
 import { InvitationPanel } from "@/components/invitations/invitation-panel";
+import { RsvpStatus } from "@/components/guests/rsvp-status";
 export const metadata = { title: "Guest details | Plan My Marriage" };
 export default async function GuestPage({
   params,
@@ -124,6 +125,7 @@ export default async function GuestPage({
                       Celebration {index + 1}
                     </span>
                     <VisibilityBadge visibility={event.visibility} />
+                    <RsvpStatus status={event.rsvpStatus} />
                   </div>
                   <h3 className="mt-3 break-words font-headline-md text-title-lg text-primary">
                     <Link

@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import type { InvitationDTO } from "@/modules/invitations/dto";
-import { InvitationView, InvitationUnavailable } from "./invitation-view";
+import { InvitationUnavailable } from "./invitation-view";
+import { RsvpInvitation } from "./rsvp-invitation";
 export function PublicInvitation() {
   const { token } = useParams<{ token: string }>();
   return <InvitationLoader key={token} token={token} />;
@@ -45,7 +46,18 @@ function InvitationLoader({ token }: { token: string }) {
     return () => controller.abort();
   }, [token, attempt]);
   if (state.invalid) return <InvitationUnavailable />;
-  if (state.data) return <InvitationView invitation={state.data} />;
+  if (state.data)
+    return (
+      <RsvpInvitation
+        invitation={state.data}
+        token={token}
+        onInvalid={() => setState({ invalid: true })}
+        onReload={() => {
+          setState({});
+          setAttempt(attempt + 1);
+        }}
+      />
+    );
   return (
     <main className="flex min-h-screen items-center justify-center bg-surface p-6">
       <div className="max-w-md rounded-xl bg-white p-8 text-center">

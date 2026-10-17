@@ -6,6 +6,7 @@ import {
   limitGuestRequests,
   limitInvitationRead,
   limitInvitationCreation,
+  limitRsvpRequests,
 } from "@/modules/auth/rate-limit";
 import { assertSameOrigin, readInput } from "@/lib/http/input";
 import { HttpError } from "@/lib/http/errors";
@@ -13,20 +14,37 @@ import { ConfigurationError } from "@/lib/config/env.server";
 import { createRequestContext } from "@/lib/http/request-context";
 import { successResponse, errorResponse } from "@/lib/http/responses";
 import { logRequest } from "@/lib/logging/logger";
-import { createLinkSchema } from "./schema";
-import { createLink, listLinks, revokeLink, readInvitation } from "./service";
+import { createLinkSchema, rsvpSchema } from "./schema";
+import { hashToken } from "./token";
+import {
+  createLink,
+  listLinks,
+  revokeLink,
+  readInvitation,
+  submitRsvps,
+} from "./service";
 type Target = { weddingId: string; guestId: string; accessTokenId?: string };
 export async function handleInvitation(request: NextRequest, target?: Target) {
   const { requestId, startedAt } = createRequestContext();
   let response: Response;
   try {
     if (!target) {
-      await limitInvitationRead(request);
       const token =
         /^Bearer ([A-Za-z0-9_-]{43})$/i.exec(
           request.headers.get("authorization") ?? "",
         )?.[1] ?? "";
-      response = successResponse(await readInvitation(token), requestId);
+      if (request.method === "PATCH") {
+        assertSameOrigin(request);
+        await limitRsvpRequests(request, hashToken(token));
+        const input = await readInput(request, rsvpSchema, {
+          fields: ["responses"],
+          maxBytes: 16384,
+        });
+        response = successResponse(await submitRsvps(token, input), requestId);
+      } else {
+        await limitInvitationRead(request);
+        response = successResponse(await readInvitation(token), requestId);
+      }
     } else {
       if (request.method !== "GET") assertSameOrigin(request);
       const user = await authenticate(
@@ -83,7 +101,9 @@ export async function handleInvitation(request: NextRequest, target?: Target) {
     requestId,
     route: target
       ? "/api/v1/weddings/:weddingId/guests/:guestId/access-links/:accessTokenId?"
-      : "/api/v1/guest/invitation",
+      : request.method === "PATCH"
+        ? "/api/v1/guest/rsvps"
+        : "/api/v1/guest/invitation",
     method: request.method,
     status: response.status,
     durationMs: performance.now() - startedAt,
