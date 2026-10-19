@@ -22,7 +22,8 @@
     "db:wedding-indexes": "node scripts/wedding-indexes.mjs --apply",
     "db:event-indexes": "node scripts/event-indexes.mjs --apply",
     "db:guest-indexes": "node scripts/guest-indexes.mjs --apply",
-    "db:invitation-indexes": "node scripts/invitation-indexes.mjs --apply"
+    "db:invitation-indexes": "node scripts/invitation-indexes.mjs --apply",
+    "db:team-indexes": "node scripts/team-indexes.mjs --apply"
   },
   "dependencies": {
     "bcryptjs": "3.0.3",

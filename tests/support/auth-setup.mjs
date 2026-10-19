@@ -9,6 +9,7 @@ import { applyWeddingIndexes } from "../../scripts/wedding-indexes.mjs";
 import { applyEventIndexes } from "../../scripts/event-indexes.mjs";
 import { applyGuestIndexes } from "../../scripts/guest-indexes.mjs";
 import { applyInvitationIndexes } from "../../scripts/invitation-indexes.mjs";
+import { applyTeamIndexes } from "../../scripts/team-indexes.mjs";
 
 export default async function setup() {
   // Never reuse an existing server: it could be connected to a real database.
@@ -23,6 +24,7 @@ export default async function setup() {
   });
   let next;
   process.env.PMM_TEST_MONGODB_URI = mongo.getUri();
+  process.env.PMM_TEST_SESSION_SECRET = randomBytes(48).toString("base64url");
   async function cleanup() {
     if (next && next.exitCode === null) {
       const exited = new Promise((resolve) => next.once("exit", resolve));
@@ -42,10 +44,13 @@ export default async function setup() {
     await applyEventIndexes(mongoose.connection.db);
     await applyGuestIndexes(mongoose.connection.db);
     await applyInvitationIndexes(mongoose.connection.db);
+    await applyTeamIndexes(mongoose.connection.db);
     await mongoose.disconnect();
     next = spawn(
       process.execPath,
       [
+        "--import",
+        "./tests/support/resend-mock.mjs",
         "node_modules/next/dist/bin/next",
         "start",
         "--hostname",
@@ -62,7 +67,10 @@ export default async function setup() {
           APP_BASE_URL: "http://127.0.0.1:3111",
           MONGODB_URI: mongo.getUri(),
           MONGODB_DB_NAME: "pmm_auth_test",
-          SESSION_SECRET: randomBytes(48).toString("base64url"),
+          SESSION_SECRET: process.env.PMM_TEST_SESSION_SECRET,
+          RESEND_API_KEY: "test-only-not-a-provider-key",
+          EMAIL_FROM: "Plan My Marriage <test@example.com>",
+          EMAIL_REPLY_TO: "",
           VERCEL: "",
           LOG_LEVEL: "silent",
         },

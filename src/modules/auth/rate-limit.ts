@@ -109,3 +109,12 @@ export async function limitInvitationCreation(userId: string) {
   await connectMongo();
   await increment(userId, "invitations:create", 60);
 }
+
+export async function limitTeamRequests(userId: string, sending: boolean) {
+  await connectMongo();
+  await increment(
+    userId,
+    sending ? "team:send" : "team:mutate",
+    sending ? 20 : 60,
+  );
+}

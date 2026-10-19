@@ -3392,3 +3392,19 @@ Recommended API implementation sequence:
 26. Rate-limit tuning, logging, integration/security tests.
 
 This order establishes identity and tenant isolation before exposing public/token capabilities or media uploads.
+
+
+## Implemented team invitation clarification (2026-10-17)
+
+The approved product decision extends section 14 invitations to ADMIN or MANAGER (default MANAGER). Roles belong to a wedding; every account can create its own wedding. Only Admins manage invitations or remove Managers. No Admin removal/demotion or wedding deletion is included.
+
+- GET /api/v1/weddings/:weddingId/members: every member; explicit id (membership id), displayName, email, role, joinedAt.
+- POST /api/v1/weddings/:weddingId/member-invitations: Admin-only strict {email, role?}; normalized email; 201 provider acceptance, 409 existing member/active invitation, 502 unconfirmed send. No raw link or token returned.
+- GET /api/v1/weddings/:weddingId/member-invitations: Admin-only newest 200 metadata records, including role and deliveryState SENDING/SENT/FAILED. Excludes tokenHash and providerMessageId. Expired records are eventually TTL-cleaned.
+- POST /api/v1/weddings/:weddingId/member-invitations/:invitationId/resend: revokes the old pending record and creates a fresh token, record, and seven-day expiry; 201 metadata. Failed sends can be resent; accepted/revoked records cannot.
+- DELETE /api/v1/weddings/:weddingId/member-invitations/:invitationId: revoke pending invitation, 204; accepted invitation 409.
+- DELETE /api/v1/weddings/:weddingId/members/:memberId: remove Manager membership, 204; Admin removal 403. Preserve account and historical data.
+- GET /api/v1/member-invitations/context: Bearer capability, optional session. Couple names, city, role, expiresAt, accepted, current user DTO and emailMatches. No recipient email exposed to anonymous viewers; no wedding id returned. Invalid/expired/revoked/unconfirmed-sent capability returns 410 INVALID_STATE.
+- POST /api/v1/member-invitations/accept: strict {token}, authenticated matching-email account, same origin; transaction creates membership and records acceptance. Returns {weddingId, role}. Accepted retry is idempotent only while membership exists. No existing-role upgrade; no restoring removed Managers.
+
+Mutation/read rate limits apply; all responses no-store. Email links use fragments to avoid raw tokens in HTTP paths. Sent means provider acceptance, not inbox delivery.

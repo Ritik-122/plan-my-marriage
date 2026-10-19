@@ -65,7 +65,7 @@ The landing-page browser checks build and start a production server on port 3100
 - HS256-signed sessions expire after seven days. Cookies are HttpOnly, SameSite=Lax, scoped to `/`, and Secure on HTTPS. Production authentication requires HTTPS except for local testing. Every protected read checks the user and `sessionVersion` in MongoDB. Logout clears this browser's cookie; it does not revoke a previously copied token. Incrementing `sessionVersion` invalidates all sessions for that user.
 - State-changing account endpoints validate Origin/Referer against `APP_BASE_URL`. Requests are never authenticated using browser localStorage.
 - Shared MongoDB rate limits allow 10 registration requests or 30 login requests per IP per 15-minute window, plus 8 login attempts per IP/email pair. Counters use HMAC fingerprints rather than raw identities. Vercel's overwritten forwarding header supplies IPs on Vercel; elsewhere a conservative shared bucket is used. Another hosting provider needs an explicitly trusted ingress adapter before deployment. See [Vercel's header contract](https://vercel.com/docs/headers/request-headers).
-- Google sign-in, password recovery, email verification, and team invitations are later milestones. The workspace lists real weddings belonging to the signed-in user.
+- Google sign-in, password recovery, and email verification are later milestones. The workspace lists real weddings belonging to the signed-in user.
 
 ## Wedding setup
 
@@ -159,10 +159,21 @@ Approved clarifications for later work:
 - Resend initially handles transactional invitations only.
 - Prefer `weddings/{weddingId}/photos/{uuid}.{ext}` for future media keys; `Photo.eventId` determines categorization.
 
-R2, CDN, Resend, QR, wedding workflows, and vendor integrations remain deferred. Install feature packages only when implementing their approved capability.
+R2, CDN, QR, and vendor integrations remain deferred. Install feature packages only when implementing their approved capability.
 
 ## Deployment
 
 Vercel is the initial target. Select this repository root, the Next.js preset, and Node 24.x. No deployment is created by this scaffold. Provider capabilities must run in the Node runtime. Configure secrets through the deployment environment when those capabilities are introduced.
 
 Review stable patch/security releases before deployment. A lockfile makes builds reproducible; it does not replace dependency maintenance. Production database indexes must later be applied explicitly, not on application boot.
+
+## Team access and email invitations
+
+- Open a wedding's **Team & Access** screen. Admins invite a partner as an equal Admin or invite a Manager, resend/revoke invitations, and remove Managers. Members can read the team directory; only Admins see pending invitation emails. No Admin removal/demotion or wedding deletion is implemented.
+- Roles belong to individual weddings. A Manager can create their own wedding and become its Admin. Both roles retain existing planning capabilities.
+- Configure server-only `RESEND_API_KEY`, `EMAIL_FROM` (a Resend-authorized sender), and optional `EMAIL_REPLY_TO`. `APP_BASE_URL` controls email links; it must be public for recipients on other devices. Localhost links only work on the computer running the app.
+- Run `npm run db:team-indexes` per database. Team mutations require replica-set transactions. Invites expire after seven days; expired metadata is TTL-cleaned. Sent means accepted by the provider, not confirmed inbox delivery. Delivery webhooks are not implemented.
+- Resending revokes the previous record and issues a fresh capability. Failed/uncertain sends remain visible and can be resent; they cannot be accepted until provider success is recorded. Crash/timeout recovery uses explicit resend.
+- Acceptance uses `/member-invitations/accept#<token>`: fragments stay out of HTTP URLs and server access logs. The client sends the token only in an Authorization header or acceptance body. Sign-in/sign-up stay on the invitation page. Matching the invited email is mandatory. Existing memberships are never upgraded by another invite; accepted links cannot restore removed memberships.
+- Provider requests time out after ten seconds and use an idempotency key per invitation. Sending is limited to 20 requests per Admin per 15 minutes; other team mutations to 60 per account. Tests intercept Resend only in a separately loaded test-server module and use disposable MongoDB, never live email or customer records.
+- Guest invitation email sending remains a separate increment.

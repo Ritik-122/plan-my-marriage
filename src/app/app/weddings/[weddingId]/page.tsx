@@ -38,6 +38,12 @@ export default async function Overview({
         </div>
         <div className="mt-10 grid gap-8 md:grid-cols-3">
           <div className="space-y-6 md:col-span-2">
+            <Link
+              href={`/app/weddings/${wedding.id}/team`}
+              className="block rounded-xl border border-outline-variant bg-white p-6 text-title-md text-primary"
+            >
+              Team &amp; Access →
+            </Link>
             <section className="rounded-xl bg-white p-6 shadow-sm">
               <h2 className="font-headline-md text-headline-md text-primary">
                 Your wedding celebrations

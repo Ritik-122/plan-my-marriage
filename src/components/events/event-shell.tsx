@@ -11,7 +11,7 @@ export function EventShell({
 }: {
   wedding: WeddingDTO;
   children: React.ReactNode;
-  active?: "events" | "guests";
+  active?: "events" | "guests" | "team";
 }) {
   const base = `/app/weddings/${wedding.id}`;
   return (
@@ -49,6 +49,13 @@ export function EventShell({
             className={`rounded-lg px-4 py-3 text-label-lg ${active === "guests" ? "bg-primary-container text-white" : ""}`}
           >
             Guests
+          </Link>
+          <Link
+            href={`${base}/team`}
+            aria-current={active === "team" ? "page" : undefined}
+            className={`rounded-lg px-4 py-3 text-label-lg ${active === "team" ? "bg-primary-container text-white" : ""}`}
+          >
+            Team &amp; Access
           </Link>
           <Link href="/app" className="rounded-lg px-4 py-3 text-label-lg">
             Your weddings

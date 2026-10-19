@@ -49,6 +49,30 @@ export function getMongoConfig(environment: Environment = process.env) {
   return parseConfig(mongoSchema, environment, "MongoDB");
 }
 
+export function getEmailConfig(environment: Environment = process.env) {
+  return parseConfig(
+    z.object({
+      RESEND_API_KEY: z.string().min(1),
+      EMAIL_FROM: z
+        .string()
+        .min(3)
+        .max(320)
+        .refine(
+          (value) =>
+            !/[\r\n]/.test(value) &&
+            z.email().safeParse(value.match(/<([^<>]+)>$/)?.[1] ?? value)
+              .success,
+        ),
+      EMAIL_REPLY_TO: z.preprocess(
+        (value) => (value === "" ? undefined : value),
+        z.email().optional(),
+      ),
+    }),
+    environment,
+    "email",
+  );
+}
+
 export function getSessionConfig(environment: Environment = process.env) {
   const config = parseConfig(
     z.object({ SESSION_SECRET: z.string().min(32).max(1024) }),

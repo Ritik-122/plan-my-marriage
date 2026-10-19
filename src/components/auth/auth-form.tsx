@@ -6,7 +6,15 @@ import { loginSchema, registerSchema } from "@/modules/auth/schema";
 
 const inputClass =
   "w-full rounded-lg border border-transparent bg-surface-container-low px-3.5 py-3 text-base text-on-surface focus:border-primary-container focus:bg-white focus:outline-2 focus:outline-primary-container disabled:opacity-60";
-export function AuthForm({ mode }: { mode: "login" | "register" }) {
+export function AuthForm({
+  mode,
+  onAuthenticated,
+  onModeChange,
+}: {
+  mode: "login" | "register";
+  onAuthenticated?: () => void;
+  onModeChange?: () => void;
+}) {
   const registering = mode === "register";
   const [visible, setVisible] = useState(false);
   const [pending, setPending] = useState(false);
@@ -50,7 +58,8 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
         return;
       }
       // Full navigation discards any previously cached anonymous/protected UI.
-      window.location.replace("/app");
+      if (onAuthenticated) onAuthenticated();
+      else window.location.replace("/app");
     } catch {
       setError("We couldn’t connect. Check your connection and try again.");
     } finally {
@@ -207,12 +216,22 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
       </p>
       <p className="text-center text-body-sm text-on-surface-variant">
         {registering ? "Already have an account?" : "New to Plan My Marriage?"}{" "}
-        <Link
-          className="font-semibold text-secondary underline-offset-4 hover:underline"
-          href={registering ? "/sign-in" : "/sign-up"}
-        >
-          {registering ? "Sign in" : "Create an account"}
-        </Link>
+        {onModeChange ? (
+          <button
+            type="button"
+            className="font-semibold text-secondary underline"
+            onClick={onModeChange}
+          >
+            {registering ? "Sign in" : "Create an account"}
+          </button>
+        ) : (
+          <Link
+            className="font-semibold text-secondary underline-offset-4 hover:underline"
+            href={registering ? "/sign-in" : "/sign-up"}
+          >
+            {registering ? "Sign in" : "Create an account"}
+          </Link>
+        )}
       </p>
     </div>
   );

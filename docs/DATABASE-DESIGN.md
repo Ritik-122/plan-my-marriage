@@ -1742,3 +1742,10 @@ Key decisions are:
 15. **Vendor discovery remains provider-backed and does not create a vendor marketplace schema.**
 
 This database model is the recommended persistence foundation for the Plan My Marriage V1 implementation.
+
+
+## Implemented team invitation clarification (2026-10-17)
+
+memberInvitations.role now supports ADMIN and MANAGER. Add deliveryState SENDING (default), SENT, FAILED. Only non-null sentAt records can be accepted. Provider ids remain internal; raw provider errors are never persisted. Install unique tokenHash, expiresAt TTL, and weddingId/email/createdAt indexes with npm run db:team-indexes.
+
+Create/resend/revoke/accept and member removal serialize through a parent Wedding write inside a transaction. Authorization is rechecked in the transaction. Resend revokes the old record and creates a new one; provider calls occur outside transactions. Failures leave FAILED with null sentAt; finalizing success requires not revoked. Membership removal retains accounts and historical data. Accepted links cannot restore removed membership or upgrade existing roles. WeddingMember retains unique weddingId/userId. No global account role is introduced.
