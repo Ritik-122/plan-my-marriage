@@ -177,3 +177,11 @@ Review stable patch/security releases before deployment. A lockfile makes builds
 - Acceptance uses `/member-invitations/accept#<token>`: fragments stay out of HTTP URLs and server access logs. The client sends the token only in an Authorization header or acceptance body. Sign-in/sign-up stay on the invitation page. Matching the invited email is mandatory. Existing memberships are never upgraded by another invite; accepted links cannot restore removed memberships.
 - Provider requests time out after ten seconds and use an idempotency key per invitation. Sending is limited to 20 requests per Admin per 15 minutes; other team mutations to 60 per account. Tests intercept Resend only in a separately loaded test-server module and use disposable MongoDB, never live email or customer records.
 - Guest invitation email sending remains a separate increment.
+
+## Individual guest email invitations
+
+- Guest Details now includes Email invitation and Preview & Send. Both Admins and Managers can review the saved recipient, couple, and assigned celebrations before confirming. Missing-email guests link to the editor.
+- Sending uses the configured Resend adapter. Success means accepted by Resend, not confirmed inbox delivery. Recent attempts retain recipient, status, timestamps and link revocation status. Every explicit resend generates a fresh link; older shared links remain valid until revoked or expired.
+- No email or token is created merely by opening a preview. Changed guest/event content requires a fresh preview. Network retries reuse the request UUID to avoid sending again after a lost response. Failed/uncertain attempts revoke their new link; reload the preview to start a new attempt. In-progress attempts older than 60 seconds are recovered on the next send.
+- Existing invitation indexes suffice. No new database setup is required. Tests intercept provider requests and use disposable MongoDB. Test-sender restrictions still apply; use a verified sending domain and public APP_BASE_URL for real guests on other devices.
+- Bulk sending, reminders, delivery/open tracking and email-copy editing remain future increments.

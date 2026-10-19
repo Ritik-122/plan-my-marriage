@@ -110,6 +110,11 @@ export async function limitInvitationCreation(userId: string) {
   await increment(userId, "invitations:create", 60);
 }
 
+export async function limitGuestEmailRequests(userId: string) {
+  await connectMongo();
+  await increment(userId, "guest-email:send", 20);
+}
+
 export async function limitTeamRequests(userId: string, sending: boolean) {
   await connectMongo();
   await increment(

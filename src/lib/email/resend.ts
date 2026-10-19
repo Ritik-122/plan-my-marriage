@@ -67,8 +67,23 @@ export async function sendTeamEmail(input: {
   url: string;
   id: string;
 }) {
-  const config = getEmailConfig();
   const text = `You are invited to plan ${input.couple}'s wedding as ${input.role === "ADMIN" ? "an Admin with full team-management access" : "a Manager with planning access"}.\n\nAccept your invitation: ${input.url}\n\nSign in or create an account using this email address. This link expires in 7 days. If you did not expect this invitation, you can ignore it.`;
+  return sendTransactionalEmail({
+    email: input.email,
+    subject: "Your wedding planning invitation",
+    text,
+    html: `<h1>Plan something beautiful together</h1><p>${escapeHtml(text).replace(/\n/g, "<br>")}</p><p><a href="${escapeHtml(input.url)}">Accept invitation</a></p>`,
+    idempotencyKey: `team-invitation/${input.id}`,
+  });
+}
+export async function sendTransactionalEmail(input: {
+  email: string;
+  subject: string;
+  text: string;
+  html: string;
+  idempotencyKey: string;
+}) {
+  const config = getEmailConfig();
   try {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -77,14 +92,14 @@ export async function sendTeamEmail(input: {
       headers: {
         Authorization: `Bearer ${config.RESEND_API_KEY}`,
         "Content-Type": "application/json",
-        "Idempotency-Key": `team-invitation/${input.id}`,
+        "Idempotency-Key": input.idempotencyKey,
       },
       body: JSON.stringify({
         from: config.EMAIL_FROM,
         to: [input.email],
-        subject: "Your wedding planning invitation",
-        text,
-        html: `<h1>Plan something beautiful together</h1><p>${escapeHtml(text).replace(/\n/g, "<br>")}</p><p><a href="${escapeHtml(input.url)}">Accept invitation</a></p>`,
+        subject: input.subject,
+        text: input.text,
+        html: input.html,
         ...(config.EMAIL_REPLY_TO ? { reply_to: config.EMAIL_REPLY_TO } : {}),
       }),
     });

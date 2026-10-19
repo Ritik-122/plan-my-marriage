@@ -11,6 +11,10 @@ globalThis.fetch = async (url, options) => {
   if (String(url) !== "https://api.resend.com/emails")
     return realFetch(url, options);
   const body = JSON.parse(options.body);
+  if (body.to[0].startsWith("timeout-"))
+    throw new Error("Mock transport failure");
+  if (body.to[0].startsWith("slow-"))
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   if (body.to[0].startsWith("failure-"))
     return Response.json(
       { message: "PRIVATE PROVIDER ERROR" },

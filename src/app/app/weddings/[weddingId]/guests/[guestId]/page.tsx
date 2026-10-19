@@ -10,6 +10,7 @@ import {
 } from "@/components/events/event-shell";
 import { DeleteGuest } from "@/components/guests/delete-guest";
 import { InvitationPanel } from "@/components/invitations/invitation-panel";
+import { GuestEmailPanel } from "@/components/invitations/email-panel";
 import { RsvpStatus } from "@/components/guests/rsvp-status";
 export const metadata = { title: "Guest details | Plan My Marriage" };
 export default async function GuestPage({
@@ -52,7 +53,71 @@ export default async function GuestPage({
           />
         </div>
       </section>
-      <div className="mt-7 grid items-start gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+      <div className="mt-7 grid items-start gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <div className="min-w-0 space-y-6">
+          <GuestEmailPanel weddingId={weddingId} guestId={guestId} />
+          <section className="min-w-0 rounded-xl bg-white p-6 shadow-sm">
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+              <h2 className="font-headline-md text-headline-md text-primary">
+                Assigned events
+              </h2>
+              <Link
+                href={`${base}/${guestId}/edit`}
+                className="text-body-sm text-primary underline"
+              >
+                Edit event assignments
+              </Link>
+            </div>
+            {events.length === 0 ? (
+              <p className="rounded-lg bg-surface-container-low p-5 text-body-md text-on-surface-variant">
+                No events assigned yet. Edit this guest to select their
+                celebrations.
+              </p>
+            ) : (
+              <ol className="space-y-4">
+                {events.map((event, index) => (
+                  <li
+                    key={event.id}
+                    className="rounded-lg bg-surface-container-low p-5"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <span className="text-xs uppercase tracking-widest text-secondary">
+                        Celebration {index + 1}
+                      </span>
+                      <VisibilityBadge visibility={event.visibility} />
+                      <RsvpStatus status={event.rsvpStatus} />
+                    </div>
+                    <h3 className="mt-3 break-words font-headline-md text-title-lg text-primary">
+                      <Link
+                        href={`/app/weddings/${weddingId}/events/${event.id}`}
+                      >
+                        {event.name}
+                      </Link>
+                    </h3>
+                    <p className="mt-3 text-body-sm text-on-surface-variant">
+                      {eventDate(event.startsAt)} · {eventTime(event.startsAt)}{" "}
+                      IST
+                    </p>
+                    <p className="mt-2 break-words text-body-sm text-on-surface-variant">
+                      {event.venue.name || "Venue to be confirmed"}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+          <section className="rounded-xl bg-white p-6 shadow-sm">
+            <div className="flex flex-wrap justify-between gap-2">
+              <h2 className="font-headline-md text-headline-md text-primary">
+                Planning note
+              </h2>
+              <span className="text-xs text-secondary">Organizers only</span>
+            </div>
+            <p className="mt-5 whitespace-pre-wrap break-words text-body-md text-on-surface-variant">
+              {guest.notes || "No private notes added."}
+            </p>
+          </section>
+        </div>
         <div className="min-w-0 space-y-6">
           <section className="rounded-xl bg-white p-6 shadow-sm">
             <h2 className="font-headline-md text-headline-md text-primary">
@@ -77,17 +142,6 @@ export default async function GuestPage({
               </div>
             </dl>
           </section>
-          <section className="rounded-xl bg-white p-6 shadow-sm">
-            <div className="flex flex-wrap justify-between gap-2">
-              <h2 className="font-headline-md text-headline-md text-primary">
-                Planning note
-              </h2>
-              <span className="text-xs text-secondary">Organizers only</span>
-            </div>
-            <p className="mt-5 whitespace-pre-wrap break-words text-body-md text-on-surface-variant">
-              {guest.notes || "No private notes added."}
-            </p>
-          </section>
           <InvitationPanel
             weddingId={weddingId}
             guestId={guestId}
@@ -96,56 +150,6 @@ export default async function GuestPage({
             ).toISOString()}
           />
         </div>
-        <section className="min-w-0 rounded-xl bg-white p-6 shadow-sm">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-headline-md text-headline-md text-primary">
-              Assigned events
-            </h2>
-            <Link
-              href={`${base}/${guestId}/edit`}
-              className="text-body-sm text-primary underline"
-            >
-              Edit event assignments
-            </Link>
-          </div>
-          {events.length === 0 ? (
-            <p className="rounded-lg bg-surface-container-low p-5 text-body-md text-on-surface-variant">
-              No events assigned yet. Edit this guest to select their
-              celebrations.
-            </p>
-          ) : (
-            <ol className="space-y-4">
-              {events.map((event, index) => (
-                <li
-                  key={event.id}
-                  className="rounded-lg bg-surface-container-low p-5"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <span className="text-xs uppercase tracking-widest text-secondary">
-                      Celebration {index + 1}
-                    </span>
-                    <VisibilityBadge visibility={event.visibility} />
-                    <RsvpStatus status={event.rsvpStatus} />
-                  </div>
-                  <h3 className="mt-3 break-words font-headline-md text-title-lg text-primary">
-                    <Link
-                      href={`/app/weddings/${weddingId}/events/${event.id}`}
-                    >
-                      {event.name}
-                    </Link>
-                  </h3>
-                  <p className="mt-3 text-body-sm text-on-surface-variant">
-                    {eventDate(event.startsAt)} · {eventTime(event.startsAt)}{" "}
-                    IST
-                  </p>
-                  <p className="mt-2 break-words text-body-sm text-on-surface-variant">
-                    {event.venue.name || "Venue to be confirmed"}
-                  </p>
-                </li>
-              ))}
-            </ol>
-          )}
-        </section>
       </div>
     </EventShell>
   );

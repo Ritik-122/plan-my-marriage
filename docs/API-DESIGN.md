@@ -3408,3 +3408,17 @@ The approved product decision extends section 14 invitations to ADMIN or MANAGER
 - POST /api/v1/member-invitations/accept: strict {token}, authenticated matching-email account, same origin; transaction creates membership and records acceptance. Returns {weddingId, role}. Accepted retry is idempotent only while membership exists. No existing-role upgrade; no restoring removed Managers.
 
 Mutation/read rate limits apply; all responses no-store. Email links use fragments to avoid raw tokens in HTTP paths. Sent means provider acceptance, not inbox delivery.
+
+
+## Guest email implementation clarification (2026-10-19)
+
+Section 22 is implemented for individual guests. Both Admins and Managers can preview and send.
+
+- GET /api/v1/weddings/:weddingId/guests/:guestId/invitations/email returns preview (recipient, guestName, couple, subject, weddingDate, city, greeting, introduction, assigned-event summaries, expiresAt, previewHash), newest 20 attempt DTOs, and localOnly. Reading creates no capability and sends no mail. Guest notes/contact fields other than the recipient are excluded from the email.
+- POST at the same path requires strict JSON {requestId: UUID, previewHash: SHA256}. The server validates the saved guest email and rechecks the current content against the reviewed preview. Changes return 409 CONFLICT requiring preview reload; callers cannot override the recipient or provide raw tokens. Success is 202 {sent:true,email,attempt}; sent means provider acceptance, not inbox delivery.
+- Every explicit new send creates a fresh private guest link. Existing shared links stay active until expiry/revocation. Failure/timeout revokes only the new attempt's token, preserves failed metadata, and returns the shared sanitized 502 EMAIL_DELIVERY_FAILED message.
+- A requestId identifies one send per guest. Repeating a completed request returns its saved result without contacting Resend again. Repeating an in-progress attempt returns 409 INVALID_STATE; failed attempts require a fresh preview/request. Per-guest transactions prevent overlapping sends. Unconfirmed attempts older than 60 seconds are failed/revoked when another send is attempted. There is no automatic background retry.
+- Sending is limited to 20 attempts per organizer per 15 minutes. Origin checks, membership checks, explicit no-store DTOs and static log routes apply. No raw capability or provider id is returned in email metadata. Email links use the existing guest capability path, subject to existing deployment access-log redaction requirements.
+- Default expiry is the later of wedding date plus seven days or the next UTC day boundary plus seven days. The preview shows the chosen expiry. Emails are snapshots; the linked guest page always uses current assigned events.
+
+Bulk sends, reminders, delivery webhooks and customizable email copy are deferred.

@@ -51,25 +51,30 @@ export function InvitationPanel({
   useEffect(() => {
     const controller = new AbortController();
     const timer = setInterval(() => setNow(Date.now()), 1000);
-    fetch(api, { cache: "no-store", signal: controller.signal })
-      .then(async (response) => {
-        const result = await response.json();
-        if (!response.ok)
-          throw new Error(
-            result.error?.message ?? "Could not load invitation links.",
-          );
-        if (!controller.signal.aborted) {
-          setLinks(result.data);
-          setLoaded(true);
-        }
-      })
-      .catch(() => {
-        if (!controller.signal.aborted)
-          setError(
-            "Could not load invitation links. Reload this page to try again.",
-          );
-      });
+    const load = () => {
+      fetch(api, { cache: "no-store", signal: controller.signal })
+        .then(async (response) => {
+          const result = await response.json();
+          if (!response.ok)
+            throw new Error(
+              result.error?.message ?? "Could not load invitation links.",
+            );
+          if (!controller.signal.aborted) {
+            setLinks(result.data);
+            setLoaded(true);
+          }
+        })
+        .catch(() => {
+          if (!controller.signal.aborted)
+            setError(
+              "Could not load invitation links. Reload this page to try again.",
+            );
+        });
+    };
+    load();
+    window.addEventListener("pmm:invitation-links-changed", load);
     return () => {
+      window.removeEventListener("pmm:invitation-links-changed", load);
       controller.abort();
       clearInterval(timer);
     };
