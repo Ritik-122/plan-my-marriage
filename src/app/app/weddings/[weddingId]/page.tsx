@@ -44,6 +44,12 @@ export default async function Overview({
             >
               Team &amp; Access →
             </Link>
+            <Link
+              href={`/app/weddings/${wedding.id}/tasks`}
+              className="block rounded-xl border border-outline-variant bg-white p-6 text-title-md text-primary"
+            >
+              Tasks &amp; Checklist ?
+            </Link>
             <section className="rounded-xl bg-white p-6 shadow-sm">
               <h2 className="font-headline-md text-headline-md text-primary">
                 Your wedding celebrations

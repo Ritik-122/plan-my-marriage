@@ -3422,3 +3422,14 @@ Section 22 is implemented for individual guests. Both Admins and Managers can pr
 - Default expiry is the later of wedding date plus seven days or the next UTC day boundary plus seven days. The preview shows the chosen expiry. Emails are snapshots; the linked guest page always uses current assigned events.
 
 Bulk sends, reminders, delivery webhooks and customizable email copy are deferred.
+
+
+## Implemented task checklist extension (2026-10-21)
+
+The Task APIs in section 16 are implemented for Admins and Managers. Collection responses use data arrays with meta.nextCursor, newest ObjectId first, default 20/max 100 rows. Added optional title-only literal search q (max 200 chars) and overdue=true (not COMPLETED and dueDate before the current instant). Due range bounds are inclusive UTC instants. Summary counts do not change with list filters.
+
+GET /api/v1/weddings/:weddingId/tasks/context returns explicit options (current member userId/name/role and wedding event id/name/startsAt/venue) and summary (total/todo/inProgress/completed/overdue). No invitation recipients, passwords or internal member records are exposed.
+
+Create defaults to TODO/MEDIUM with an empty description. Assignee, event and due date are optional; PATCH null clears them. PATCH fields remain sparse. COMPLETED retries retain completedAt; reopening clears it. All mutations recheck wedding membership within a transaction serialized with team removal. Assignment validates current wedding membership. Event assignment writes the parent event to serialize against deletion. Historical assignee IDs can remain after removal, but cannot be assigned anew. The UI shows Former team member.
+
+UI labels Done map to persisted COMPLETED. UI date/time input is explicitly IST and converted to UTC. Mutation rate limit: 120/user/15 minutes. Requests use same-origin checks, strict bounded input and no-store responses. Creation with a lost response requires checking the list before retry; no automatic retry or background reminders are implemented.

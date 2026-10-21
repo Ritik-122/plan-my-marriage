@@ -1756,3 +1756,10 @@ Create/resend/revoke/accept and member removal serialize through a parent Weddin
 The existing guestAccessTokens collection now implements providerMessageId (internal/select:false) and adds optional emailRequestId (UUID), emailRecipient (address snapshot), and emailStatus (SENDING, SENT, FAILED). Manual capabilities do not have these fields. sentAt/providerMessageId are set only after provider acceptance. Failure or unconfirmed delivery revokes the newly issued token; historical attempts remain visible.
 
 Creation and per-guest request-id deduplication serialize by writing the Guest within a MongoDB transaction. The existing weddingId/guestId/createdAt index scopes attempt queries; no additional index or collection is required. The existing unique tokenHash index remains mandatory. Raw tokens are never stored. Guest deletion or contact change during a provider call prevents finalization and revokes the attempted capability. External sending cannot be rolled back; an email may already have left the provider before such a change or a timeout, so the UI does not claim exact-once delivery. Provider calls occur outside transactions. Successful resend does not revoke older links. Failed/overdue in-progress attempts never remove pre-existing capabilities or RSVP responses.
+
+
+## Implemented task checklist (2026-10-21)
+
+The tasks collection in section 5.6 is now implemented, including its three documented compound indexes plus { weddingId: 1, _id: -1 } for stable descending cursor pagination. Apply using npm run db:task-indexes. No data migration is required.
+
+Task mutations lock the parent wedding inside a transaction, then recheck the caller's membership; team removal uses the same lock. New event associations write the same-wedding event inside the transaction to serialize with event deletion. Event deletion preserves tasks while detaching eventId. Removed member IDs may remain historically, while new assignments require current membership. completedAt changes only on a status transition and clears on reopening. No task activity log, reminder state or fabricated notification data is stored.

@@ -11,6 +11,8 @@ import { applyGuestIndexes } from "../../scripts/guest-indexes.mjs";
 import { applyInvitationIndexes } from "../../scripts/invitation-indexes.mjs";
 import { applyTeamIndexes } from "../../scripts/team-indexes.mjs";
 
+import { applyTaskIndexes } from "../../scripts/task-indexes.mjs";
+
 export default async function setup() {
   // Never reuse an existing server: it could be connected to a real database.
   const probe = createServer();
@@ -45,6 +47,7 @@ export default async function setup() {
     await applyGuestIndexes(mongoose.connection.db);
     await applyInvitationIndexes(mongoose.connection.db);
     await applyTeamIndexes(mongoose.connection.db);
+    await applyTaskIndexes(mongoose.connection.db);
     await mongoose.disconnect();
     next = spawn(
       process.execPath,

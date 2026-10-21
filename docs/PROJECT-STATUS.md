@@ -6,7 +6,7 @@ This file tracks delivery; product requirements and architecture remain governed
 
 ## Current status
 
-The engineering scaffold, public homepage, email/password authentication, wedding setup, event management, guest management with event assignments, personalized guest invitation links, and guest RSVP are implemented. Guests can respond to assigned events and organizers can review event-level attendance. Team access and Resend partner/Manager invitations are also implemented and user-verified. Individual guest email invitations are implemented with preview, send/resend and attempt history; homepage planning content remains illustrative.
+The engineering scaffold, public homepage, email/password authentication, wedding setup, event management, guest management with event assignments, personalized guest invitation links, and guest RSVP are implemented. Guests can respond to assigned events and organizers can review event-level attendance. Team access and Resend partner/Manager invitations are also implemented and user-verified. Individual guest email invitations are implemented with preview, send/resend and attempt history; homepage planning content remains illustrative. Wedding tasks and checklist are implemented with team assignment, event links, status tracking, filters and summary counts.
 
 ## Milestones
 
@@ -158,6 +158,19 @@ Delivered:
 Validation: Production build, TypeScript, lint, formatting and all 65 unit tests passed. The full browser/API run passed 23 of 24 checks; the new UI check encountered an ambiguous alert locator, which was corrected. Both guest-email checks subsequently passed against the final layout, including lost-response recovery without duplicate sending, preview cancellation, explicit resend, failure recovery, stale-preview rejection, missing email, Manager access, outsider/origin/override rejection, provider failure/timeout, concurrent sends, hash-only storage, metadata privacy, guest deletion during send, link revocation and retention of existing links. Mobile/desktop screenshots at 320px and 1440px were captured and visually reviewed. All automated sends used the isolated Resend mock and disposable MongoDB; no real guest emails were sent.
 
 Limitations: Bulk sending, reminders, email-copy editing and delivery/open tracking remain deferred. The configured Resend test sender is restricted; real guest distribution requires a verified sending domain and public APP_BASE_URL. Emails are snapshots; linked pages show current assigned events. Provider calls cannot be rolled back, so an email sent before a timeout or guest deletion can contain a revoked link. In-progress crash recovery runs on the next send after 60 seconds, not a background worker. Deployment remains unverified.
+
+### 11. Wedding tasks and checklist - Complete
+
+Delivered:
+
+- Fetched Stitch Wedding Tasks, Add/Edit Task Modal, and Task Details designs. Added responsive task overview, real summary counts, title search, assignee/event/status/priority/overdue filters, cursor pagination, task editor and details. Navigation is available from the wedding overview and workspace sidebar.
+- Admins and Managers create, edit, assign, complete/reopen and delete tasks with confirmation. Optional event, current team assignee, due time in IST, priority and plain-text description. Done maps to COMPLETED; completion retries preserve timestamps, reopening clears them.
+- Thin authenticated APIs with explicit DTOs, strict bounded validation, origin checks, rate limits, no-store responses and wedding-scoped queries. Transactions serialize team membership changes and event assignment/deletion. Removed assignees remain historical; event deletion detaches preserved tasks. No simulated vendor/contact/notification data is displayed.
+- Four task indexes and a repeatable deployment script. Applied to configured Atlas without creating tasks. Updated API/database docs and README.
+
+Validation: Build, TypeScript, lint, formatting and all 68 unit tests passed. All 26 combined browser/API checks passed against disposable MongoDB, including task tenant isolation, origin checks, forged fields, cross-wedding references, sparse updates, completion timestamp idempotence, reopening, literal search, cursor pagination, Manager access/removal, historical assignment retention, event detachment, create/edit/delete UI and 320px/1440px overflow checks. Desktop/mobile screenshots were visually reviewed. An initial browser launch issue was resolved by selecting the existing .tools/browsers installation. No test tasks were created in the live database. Local preview returned health 200.
+
+Limitations: Reminders, recurring tasks, notifications, exports, subscribers, vendor integration and live polling are deferred. Unknown creation outcomes require checking the refreshed task list before retry. Due-time labels use IST. Each new database needs npm run db:task-indexes. Deployment remains unverified.
 
 ## Maintaining this record
 

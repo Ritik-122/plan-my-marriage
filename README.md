@@ -185,3 +185,9 @@ Review stable patch/security releases before deployment. A lockfile makes builds
 - No email or token is created merely by opening a preview. Changed guest/event content requires a fresh preview. Network retries reuse the request UUID to avoid sending again after a lost response. Failed/uncertain attempts revoke their new link; reload the preview to start a new attempt. In-progress attempts older than 60 seconds are recovered on the next send.
 - Existing invitation indexes suffice. No new database setup is required. Tests intercept provider requests and use disposable MongoDB. Test-sender restrictions still apply; use a verified sending domain and public APP_BASE_URL for real guests on other devices.
 - Bulk sending, reminders, delivery/open tracking and email-copy editing remain future increments.
+
+### Wedding tasks and checklist
+
+Open a wedding's Tasks link to create tasks, assign current Admins/Managers, set optional IST due times and events, and track To do/In progress/Done. Includes priority, literal title search, assignee/event/status/overdue filters, pagination, counts, edit/reopen, and confirmed deletion. Dates are stored in UTC. Admins and Managers can manage all wedding tasks. Removed members appear as Former team member on retained assignments.
+
+Run npm run db:task-indexes for each database. No email notifications, reminders, recurring tasks, exports, vendor links or task subscribers are included. If creation loses its response, check the refreshed list before retrying.

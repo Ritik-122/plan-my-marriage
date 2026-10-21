@@ -123,3 +123,8 @@ export async function limitTeamRequests(userId: string, sending: boolean) {
     sending ? 20 : 60,
   );
 }
+
+export async function limitTaskRequests(userId: string) {
+  await connectMongo();
+  await increment(userId, "tasks:mutate", 120);
+}
