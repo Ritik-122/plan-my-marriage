@@ -9,6 +9,21 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        source: "/w/:path*",
+        headers: [
+          { key: "Cache-Control", value: "private, no-store" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+          { key: "Referrer-Policy", value: "no-referrer" },
+        ],
+      },
+      {
+        source: "/app/weddings/:weddingId/website/:path*",
+        headers: [
+          { key: "Cache-Control", value: "private, no-store" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+        ],
+      },
+      {
         source: "/member-invitations/:path*",
         headers: [
           { key: "Referrer-Policy", value: "no-referrer" },

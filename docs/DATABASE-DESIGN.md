@@ -1772,3 +1772,9 @@ The expenses collection in section 5.7 is implemented with integer paise and INR
 Expense mutations lock the parent wedding and recheck Admin/Manager membership inside the transaction, serializing with team removal. Setting eventId writes the same-wedding parent event to serialize with event deletion. Event deletion preserves expense amounts while detaching eventId. Summary uses a wedding-scoped aggregate with category/event facets and refuses unsafe numeric totals.
 
 Dashboard queries are wedding-scoped counts, aggregates and bounded event/task lists. Guest record counts remain separate from RSVP assignment counts. No new dashboard collection, activity model or fabricated statistics are introduced.
+
+## Implemented website publishing persistence
+
+Publishing reuses Wedding.website.isPublished (default false), the existing immutable unique slug, theme and description fields. There are no new collections or indexes. Strict nested PATCH updates map to `$set: { "website.isPublished": value }`, retaining other website flags. All Wedding updates now run inside a transaction: increment Wedding.__v to serialize with team membership changes, re-check current ADMIN/MANAGER membership, and roll back on lost access.
+
+Public lookups require both slug and website.isPublished=true. Event reads scope by weddingId and visibility=PUBLIC, ordered by startsAt/_id using the existing wedding event index. Explicit public DTO projection excludes organizer/private properties. The protected preview uses the same projection after membership authorization. There is no published snapshot collection, activity log or separate draft version in this increment.

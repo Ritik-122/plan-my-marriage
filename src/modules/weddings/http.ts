@@ -34,6 +34,7 @@ export async function handleWedding(request: NextRequest, weddingId?: string) {
         "slug",
         "theme",
         "description",
+        "website",
       ],
       maxBytes: 8192,
     };

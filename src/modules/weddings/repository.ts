@@ -79,14 +79,33 @@ export async function createWithAdmin(
   });
 }
 export async function updateWeddingRecord(
+  userId: string,
   weddingId: string,
   input: UpdateWeddingInput,
 ) {
-  return Wedding.findOneAndUpdate(
-    { _id: weddingId },
-    { $set: input },
-    { returnDocument: "after", runValidators: true },
-  )
-    .lean()
-    .exec();
+  const { website, ...details } = input;
+  return mongoose.connection.transaction(async (session) => {
+    const wedding = await Wedding.findOneAndUpdate(
+      { _id: weddingId },
+      {
+        $inc: { __v: 1 },
+        $set: {
+          ...details,
+          ...(website ? { "website.isPublished": website.isPublished } : {}),
+        },
+      },
+      { session, returnDocument: "after", runValidators: true },
+    ).lean();
+    // The wedding write serializes this mutation with team membership removal.
+    if (
+      !wedding ||
+      !(await WeddingMember.exists({
+        weddingId,
+        userId,
+        role: { $in: ["ADMIN", "MANAGER"] },
+      }).session(session))
+    )
+      throw new HttpError(404, "NOT_FOUND", "Wedding not found.");
+    return wedding;
+  });
 }

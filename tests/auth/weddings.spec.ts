@@ -146,7 +146,7 @@ test("wedding API enforces membership, unique handles and transaction rollback",
       (
         await owner.patch(path, {
           headers,
-          data: { website: { isPublished: true } },
+          data: { website: { isPublished: true, forged: true } },
         })
       ).status(),
     ).toBe(400);

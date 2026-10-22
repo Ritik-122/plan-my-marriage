@@ -10,6 +10,8 @@ The engineering scaffold, public homepage, email/password authentication, weddin
 
 V1 expense tracking and the wedding dashboard are implemented. Organizers can record and manage INR expenses with category/event totals. The shared sidebar connects planning features; users with one wedding enter its dashboard directly after login, while the wedding chooser remains available.
 
+The guest wedding website and publishing flow are implemented: organizer management, private preview, three themes, a public-only event schedule, and explicit publish/unpublish controls. Personalized invitations and RSVP remain independent of publication.
+
 ## Milestones
 
 ### 1. Project scaffold — Complete
@@ -186,6 +188,19 @@ Delivered:
 Validation: Production build, TypeScript, lint, formatting and all 72 unit tests passed. The combined browser/API run passed 27 checks; after correcting a dropdown test selector, both expense checks passed on a targeted rerun, covering all 28 checks overall. Coverage includes paise precision, tenant isolation, origin checks, Manager access/removal, event deletion preserving expenses, filters, pagination, summaries, create/edit/delete UI, failed-save recovery and single/multiple-wedding routing. Desktop/mobile screenshots were visually reviewed and 320px/1440px overflow checks passed. Expense indexes were applied to the configured Atlas database without creating test records. Local preview health returned 200.
 
 Limitations: No budgets, receipt uploads, exports, payments, vendor booking, gallery/publishing statistics, live polling or activity feed in this increment. Dashboard uses the currently implemented V1 modules. Lost creation responses require checking the refreshed list before retrying. Deployment remains unverified for this change.
+
+### 13. Guest wedding website and publishing - Complete
+
+Delivered:
+
+- Fetched Stitch Wedding Website Management, Guest Wedding Website, and Publish/Unpublish Dialog designs. Added a sidebar management page, private desktop/mobile preview, theme selection, welcome-note editing, copyable URL and confirmed publishing controls for Admins and Managers.
+- `/w/:slug` and the public API expose only published wedding details and explicitly Public events. Guest DTOs exclude contacts, guest lists, invitation tokens, RSVP counts, tasks, expenses, and invite-only ceremonies. Unknown/unpublished sites use the same unavailable response. The protected preview uses the same safe data and renderer.
+- Three responsive themes retain the existing branding. Decorative architecture replaces sample couple photos until media uploads exist. Public event times use IST; safe external map links open in a new tab. No invented venue facilities, concierge details or guest data.
+- Publishing uses a strict nested PATCH to the existing Wedding endpoint, preserving other website fields. Wedding updates now serialize membership checks with team removal. Public pages/API responses are uncached, and personal invitation/RSVP access is independent of publishing.
+
+Validation: Production build, TypeScript, lint, formatting and 75 unit tests passed. All 30 combined browser/API checks passed against disposable MongoDB. New coverage verifies generic unavailable responses, protected previews, tenant isolation, origin checks, strict publication validation, preservation of sibling website fields, immediate theme/event visibility updates, removal of Manager access, private-data exclusion, and personalized RSVP after unpublishing. The UI journey covers note persistence, all three themes, publication confirmation, failed-save recovery, unpublish cancellation/confirmation, and 320px/1440px overflow checks. Desktop/mobile screenshots were visually reviewed. No live wedding was published or modified for testing.
+
+Limitations: Photos, galleries, QR downloads, website analytics, travel planning and public RSVP forms remain outside this increment. Changes to a published site's saved content are immediately public; no separate draft/publish revision system. Unpublish before making private revisions. Previously viewed/downloaded information cannot be recalled. Copied links require the correct APP_BASE_URL. Deployment remains unverified for this change.
 
 ## Maintaining this record
 

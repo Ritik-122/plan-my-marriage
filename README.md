@@ -4,6 +4,12 @@ Next.js App Router modular monolith with a public landing page, email/password a
 
 Landing sections live in `src/components/landing`; shared interactions provide responsive navigation and an accessible native dialog. Images and fonts are served locally from `public/landing`, so builds require no external asset requests or provider credentials.
 
+## Guest wedding website
+
+The wedding sidebar now includes **Wedding Website**: private preview, the three existing themes, a welcome note, a shareable address and confirmed publish/unpublish actions. Admins and Managers can manage it. `/w/:slug` shows only published wedding details and public events; personalized invitations and RSVP remain independent. Saved theme, note, couple-detail and public-event changes take effect on published pages immediately. There is no separate draft version of a published site. Unpublish before making changes you do not want publicly visible yet.
+
+The website uses a decorative hero until media uploads are implemented. Photos, galleries, QR downloads, public RSVP forms, concierge/contact information, travel planning and website analytics are outside this increment. Configure `APP_BASE_URL` to the reachable HTTPS deployment origin for copied links. No new credentials or database indexes are required for website publishing. Pages and API responses use no-store; noindex is a search-engine instruction, not access control for published pages.
+
 ## Local development
 
 Use Node **24.21.0** (`.nvmrc`; supported major `24.x`) and npm. Install that runtime with your preferred Node version manager before running:
@@ -71,9 +77,9 @@ The landing-page browser checks build and start a production server on port 3100
 
 - `/app/weddings/new` follows the Stitch three-step flow: details, theme, review. Creation saves the wedding and its first Admin membership in one MongoDB transaction. Atlas or a replica set is required.
 - Drafts are stored only in this browser, scoped to the signed-in user, and restored for seven days. Save & Exit does not create a database record. Final creation clears the draft.
-- The three themes preview the future guest experience. They do not change the planning workspace. Dates use Asia/Kolkata; handles are normalized and unique, checked at creation, and immutable afterward.
+- The three themes style the guest website and invitations. They do not change the planning workspace. Dates use Asia/Kolkata; handles are normalized and unique, checked at creation, and immutable afterward.
 - `/app` lists membership-scoped weddings. The protected overview and edit pages support persisted details and theme changes for Admins and Managers.
-- `GET/POST /api/v1/weddings` and `GET/PATCH /api/v1/weddings/:weddingId` implement this increment. PATCH accepts core details and theme only; publishing settings, uploads, invitations, and ceremony planning remain deferred. Guest websites start unpublished.
+- `GET/POST /api/v1/weddings` and `GET/PATCH /api/v1/weddings/:weddingId` support wedding setup. PATCH accepts core details, theme, and the nested `website.isPublished` flag. Guest websites start unpublished; media uploads remain deferred.
 - Run `npm run db:wedding-indexes` once per configured database before using creation. It explicitly applies unique slug and membership indexes plus date and membership-list indexes. Missing unique indexes prevent creation safely. Mutation limits are 10 creates and 60 updates per user per 15 minutes.
 - `npm run test:auth` includes wedding integration checks using a disposable MongoDB replica set, including duplicate races, access isolation, and rollback on membership failure. It never uses the configured application database for test records.
 
@@ -83,7 +89,7 @@ The wedding overview links to `/app/weddings/:weddingId/events`: a chronological
 
 - Authenticated Admins and Managers can list, create, read, edit, and delete their wedding's events. All event queries include the wedding ID after membership authorization. Mutations require the configured origin and share a 60-request/user/15-minute limit.
 - Event types are `HALDI`, `MEHENDI`, `SANGEET`, `WEDDING`, `RECEPTION`, and `CUSTOM`. Forms interpret date/time inputs in Asia/Kolkata and store UTC. End time is optional and must be later than start time, including sparse PATCH updates. Nested venue PATCH fields merge; `endsAt: null` clears the end time.
-- Visibility is `PUBLIC` or `INVITED_ONLY`, defaulting to `INVITED_ONLY`, per the approved product clarification. This saves intent; it does not publish the website or send invitations. Dress code is editable; the API also accepts an optional external livestream URL. Photo uploads, guest assignment, RSVP, tasks, budgets, calendar/PDF export, and publishing are deferred.
+- Visibility is `PUBLIC` or `INVITED_ONLY`, defaulting to `INVITED_ONLY`, per the approved product clarification. Public events appear immediately on published wedding websites; saving an event does not send invitations. Dress code is editable; the API also accepts an optional external livestream URL for personalized invitations. Photo uploads, budgets and calendar/PDF export remain deferred.
 - GET list supports inclusive `from`/`to` ISO timestamp filters on start time. Run `npm run db:event-indexes` for each database to apply `{ weddingId: 1, startsAt: 1 }`.
 - Updates and deletions use MongoDB transactions. Deletion removes event guest assignments, revokes photo upload tokens, detaches preserved tasks/expenses, and deletes the event last. Events with photo metadata return 409 until storage cleanup is implemented; this increment never deletes photo objects.
 - `npm run test:auth` includes the event browser/API suite using a disposable replica set. No real wedding data is needed for these tests.
@@ -106,7 +112,7 @@ The wedding overview links to `/app/weddings/:weddingId/events`: a chronological
 - Unknown, expired, revoked, and deleted-guest links return the same `401 GUEST_LINK_INVALID` response. Provider/network failures show a retry state. Previewing as an organizer creates no token and does not update last-opened metadata. Revocation prevents subsequent reads; it cannot erase content a guest already viewed or saved.
 - Responses use `no-store`; guest pages disable referrers and indexing. Application logs use static route templates, and development request logging skips capability paths. Before deployment, configure hosting/proxy/analytics logs to omit or redact `/guest/invite/:token` paths and authorization headers; do not attach third-party analytics to these pages.
 - Run `npm run db:invitation-indexes` for each database. Expired metadata is retained for organizer history; expiry is enforced on reads rather than relying on TTL cleanup. Link creation serializes with guest deletion. Creation is limited to 60 per organizer per 15 minutes; guest reads to 300 per trusted client IP per 15 minutes (shared bucket on local/untrusted ingress).
-- `APP_BASE_URL` must be the reachable application origin for shared links. Localhost links work only on the same computer. Email sending and public wedding-site publishing remain later increments.
+- `APP_BASE_URL` must be the reachable application origin for shared links. Localhost links work only on the same computer. Email sending and public wedding-site publishing are implemented in the later sections of this record.
 
 ## Guest RSVP
 

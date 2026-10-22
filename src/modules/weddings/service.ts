@@ -55,7 +55,11 @@ export async function updateWedding(
   input: UpdateWeddingInput,
 ) {
   const member = await requireMembership(userId, weddingId);
-  const wedding = await repository.updateWeddingRecord(weddingId, input);
+  const wedding = await repository.updateWeddingRecord(
+    userId,
+    weddingId,
+    input,
+  );
   if (!wedding) throw notFound();
   return toWeddingDTO(wedding, member.role);
 }

@@ -11,7 +11,14 @@ export function EventShell({
 }: {
   wedding: WeddingDTO;
   children: React.ReactNode;
-  active?: "events" | "guests" | "team" | "tasks" | "expenses" | "dashboard";
+  active?:
+    | "events"
+    | "guests"
+    | "team"
+    | "tasks"
+    | "expenses"
+    | "dashboard"
+    | "website";
 }) {
   const base = `/app/weddings/${wedding.id}`;
   return (
@@ -40,6 +47,7 @@ export function EventShell({
               ["tasks", "Tasks", base + "/tasks"],
               ["expenses", "Expenses", base + "/expenses"],
               ["guests", "Guests", base + "/guests"],
+              ["website", "Wedding Website", base + "/website"],
               ["team", "Team & Access", base + "/team"],
             ] as const
           ).map(([key, label, href]) => (

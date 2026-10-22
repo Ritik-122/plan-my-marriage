@@ -261,7 +261,7 @@ export function EventForm({
                   </span>
                   <p className="mt-3 text-body-sm text-on-surface-variant">
                     {v === "PUBLIC"
-                      ? "Eligible to appear on your future published wedding website."
+                      ? "Visible to anyone when your wedding website is published."
                       : "Reserved for guests assigned to this event. Recommended."}
                   </p>
                 </label>
@@ -269,8 +269,8 @@ export function EventForm({
             </div>
           </fieldset>
           <p className="text-body-sm text-on-surface-variant">
-            Saving this setting does not publish your website or send
-            invitations.
+            Public events appear immediately if your website is published.
+            Saving this setting does not send invitations.
           </p>
         </section>
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-white p-5">

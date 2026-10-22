@@ -40,7 +40,10 @@ export const createWeddingSchema = z
   .strict();
 export const updateWeddingSchema = createWeddingSchema
   .omit({ slug: true })
-  .extend({ description: z.string().trim().max(1000) })
+  .extend({
+    description: z.string().trim().max(1000),
+    website: z.object({ isPublished: z.boolean() }).strict(),
+  })
   .partial()
   .strict()
   .refine(

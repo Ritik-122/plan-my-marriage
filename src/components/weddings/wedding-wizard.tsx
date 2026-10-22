@@ -260,7 +260,7 @@ export function WeddingWizard({
                 {step === 1
                   ? "Just the essentials for now. You can refine your details later."
                   : step === 2
-                    ? "Choose a style for your future guest website and invitations. Your planning workspace stays the same."
+                    ? "Choose a style for your guest website and invitations. Your planning workspace stays the same."
                     : "Review your details before we create your private wedding workspace."}
               </p>
               <p className="mt-3 text-body-sm text-outline">
@@ -361,8 +361,8 @@ export function WeddingWizard({
             </fieldset>
             <div className="mt-8 rounded-xl bg-surface-container-low p-5 text-body-md text-on-surface-variant">
               You can change your theme later without changing your wedding
-              details. These are style previews; guest website publishing comes
-              in a later milestone.
+              details. You can preview and publish your guest website after
+              creating your wedding.
             </div>
             <div className="mt-8 flex flex-wrap justify-between gap-4">
               <button
