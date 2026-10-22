@@ -24,7 +24,8 @@
     "db:guest-indexes": "node scripts/guest-indexes.mjs --apply",
     "db:invitation-indexes": "node scripts/invitation-indexes.mjs --apply",
     "db:team-indexes": "node scripts/team-indexes.mjs --apply",
-    "db:task-indexes": "node scripts/task-indexes.mjs --apply"
+    "db:task-indexes": "node scripts/task-indexes.mjs --apply",
+    "db:expense-indexes": "node scripts/expense-indexes.mjs --apply"
   },
   "dependencies": {
     "bcryptjs": "3.0.3",

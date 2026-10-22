@@ -13,6 +13,8 @@ import { applyTeamIndexes } from "../../scripts/team-indexes.mjs";
 
 import { applyTaskIndexes } from "../../scripts/task-indexes.mjs";
 
+import { applyExpenseIndexes } from "../../scripts/expense-indexes.mjs";
+
 export default async function setup() {
   // Never reuse an existing server: it could be connected to a real database.
   const probe = createServer();
@@ -22,6 +24,7 @@ export default async function setup() {
   });
   await new Promise((resolve) => probe.close(resolve));
   const mongo = await MongoMemoryReplSet.create({
+    instanceOpts: [{ launchTimeout: 30000 }],
     replSet: { count: 1, storageEngine: "wiredTiger" },
   });
   let next;
@@ -48,6 +51,7 @@ export default async function setup() {
     await applyInvitationIndexes(mongoose.connection.db);
     await applyTeamIndexes(mongoose.connection.db);
     await applyTaskIndexes(mongoose.connection.db);
+    await applyExpenseIndexes(mongoose.connection.db);
     await mongoose.disconnect();
     next = spawn(
       process.execPath,

@@ -128,3 +128,8 @@ export async function limitTaskRequests(userId: string) {
   await connectMongo();
   await increment(userId, "tasks:mutate", 120);
 }
+
+export async function limitExpenseRequests(userId: string) {
+  await connectMongo();
+  await increment(userId, "expenses:mutate", 120);
+}

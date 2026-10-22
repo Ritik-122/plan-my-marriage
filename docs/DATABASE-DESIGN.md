@@ -1763,3 +1763,12 @@ Creation and per-guest request-id deduplication serialize by writing the Guest w
 The tasks collection in section 5.6 is now implemented, including its three documented compound indexes plus { weddingId: 1, _id: -1 } for stable descending cursor pagination. Apply using npm run db:task-indexes. No data migration is required.
 
 Task mutations lock the parent wedding inside a transaction, then recheck the caller's membership; team removal uses the same lock. New event associations write the same-wedding event inside the transaction to serialize with event deletion. Event deletion preserves tasks while detaching eventId. Removed member IDs may remain historically, while new assignments require current membership. completedAt changes only on a status transition and clears on reopening. No task activity log, reminder state or fabricated notification data is stored.
+
+
+## Implemented expense persistence and dashboard queries (2026-10-22)
+
+The expenses collection in section 5.7 is implemented with integer paise and INR, an ISO expenseDate, optional event reference and plain-text vendorName/paidBy/notes. No budget, payment processing, receipt, vendor-account or contract fields are stored. The list index includes an ID tie-breaker: { weddingId: 1, expenseDate: -1, _id: -1 }; the category and event/date indexes follow section 5.7. Apply using npm run db:expense-indexes; no data migration is required.
+
+Expense mutations lock the parent wedding and recheck Admin/Manager membership inside the transaction, serializing with team removal. Setting eventId writes the same-wedding parent event to serialize with event deletion. Event deletion preserves expense amounts while detaching eventId. Summary uses a wedding-scoped aggregate with category/event facets and refuses unsafe numeric totals.
+
+Dashboard queries are wedding-scoped counts, aggregates and bounded event/task lists. Guest record counts remain separate from RSVP assignment counts. No new dashboard collection, activity model or fabricated statistics are introduced.

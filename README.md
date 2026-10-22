@@ -191,3 +191,9 @@ Review stable patch/security releases before deployment. A lockfile makes builds
 Open a wedding's Tasks link to create tasks, assign current Admins/Managers, set optional IST due times and events, and track To do/In progress/Done. Includes priority, literal title search, assignee/event/status/overdue filters, pagination, counts, edit/reopen, and confirmed deletion. Dates are stored in UTC. Admins and Managers can manage all wedding tasks. Removed members appear as Former team member on retained assignments.
 
 Run npm run db:task-indexes for each database. No email notifications, reminders, recurring tasks, exports, vendor links or task subscribers are included. If creation loses its response, check the refreshed list before retrying.
+
+### V1 expenses and wedding dashboard
+
+The wedding dashboard shows real task progress, unique guest count, recorded expense totals, event counts, upcoming celebrations, overdue tasks, team size and separately labeled event RSVP totals. Users with one wedding land directly on it after login; Your weddings opens /app?select=1 for switching or creating another. Users with no weddings or several weddings retain the chooser.
+
+Expenses supports create/edit/delete, optional event/vendor name/paid by/notes, INR amounts with two decimal places, calendar dates in IST, category/event/date/search filters, cursor pagination and wedding-wide totals. Amounts are stored as integer paise. Run npm run db:expense-indexes for each database. This increment includes no budgets, payment processing, receipt uploads, exports or vendor booking. Unknown save outcomes require checking the refreshed list before retrying.

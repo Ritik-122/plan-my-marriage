@@ -59,7 +59,7 @@ test("wizard saves a draft, creates, and edits a persisted wedding", async ({
   await expect(
     page.getByRole("heading", { name: "Your wedding workspace is ready." }),
   ).toBeVisible();
-  await page.getByRole("link", { name: /Open Wedding Overview/ }).click();
+  await page.getByRole("link", { name: /Open Wedding Dashboard/ }).click();
   await expect(page).toHaveURL(/\/app\/weddings\/[a-f0-9]+$/);
   await page.reload();
   await expect(

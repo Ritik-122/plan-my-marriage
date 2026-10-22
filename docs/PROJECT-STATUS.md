@@ -8,6 +8,8 @@ This file tracks delivery; product requirements and architecture remain governed
 
 The engineering scaffold, public homepage, email/password authentication, wedding setup, event management, guest management with event assignments, personalized guest invitation links, and guest RSVP are implemented. Guests can respond to assigned events and organizers can review event-level attendance. Team access and Resend partner/Manager invitations are also implemented and user-verified. Individual guest email invitations are implemented with preview, send/resend and attempt history; homepage planning content remains illustrative. Wedding tasks and checklist are implemented with team assignment, event links, status tracking, filters and summary counts.
 
+V1 expense tracking and the wedding dashboard are implemented. Organizers can record and manage INR expenses with category/event totals. The shared sidebar connects planning features; users with one wedding enter its dashboard directly after login, while the wedding chooser remains available.
+
 ## Milestones
 
 ### 1. Project scaffold — Complete
@@ -171,6 +173,19 @@ Delivered:
 Validation: Build, TypeScript, lint, formatting and all 68 unit tests passed. All 26 combined browser/API checks passed against disposable MongoDB, including task tenant isolation, origin checks, forged fields, cross-wedding references, sparse updates, completion timestamp idempotence, reopening, literal search, cursor pagination, Manager access/removal, historical assignment retention, event detachment, create/edit/delete UI and 320px/1440px overflow checks. Desktop/mobile screenshots were visually reviewed. An initial browser launch issue was resolved by selecting the existing .tools/browsers installation. No test tasks were created in the live database. Local preview returned health 200.
 
 Limitations: Reminders, recurring tasks, notifications, exports, subscribers, vendor integration and live polling are deferred. Unknown creation outcomes require checking the refreshed task list before retry. Due-time labels use IST. Each new database needs npm run db:task-indexes. Deployment remains unverified.
+
+### 12. V1 expense tracking and wedding dashboard - Complete
+
+Delivered:
+
+- Fetched Stitch expense overview, editor, details, and dashboard designs. Implemented responsive real expense records, category/event breakdowns, search and date filters, pagination, edit and confirmed deletion. Kept budgets, receipts, exports, payments and vendor records outside this increment.
+- Strict HTTP contracts accept rupees and persist integer paise, INR, expense date and optional event/vendor name/paid by/notes. Transactional membership checks serialize with team removal and parent event writes with event deletion. No live test records are used.
+- Replaced the old wedding overview with a real dashboard and shared navigation: tasks, unique guest count, expenses, event count, upcoming events, overdue tasks, team size and explicitly event-level RSVP counts. Exactly one wedding opens directly after login; an explicit chooser remains available for switching and creation.
+- Added repeatable expense indexes, API/database documentation and regression coverage.
+
+Validation: Production build, TypeScript, lint, formatting and all 72 unit tests passed. The combined browser/API run passed 27 checks; after correcting a dropdown test selector, both expense checks passed on a targeted rerun, covering all 28 checks overall. Coverage includes paise precision, tenant isolation, origin checks, Manager access/removal, event deletion preserving expenses, filters, pagination, summaries, create/edit/delete UI, failed-save recovery and single/multiple-wedding routing. Desktop/mobile screenshots were visually reviewed and 320px/1440px overflow checks passed. Expense indexes were applied to the configured Atlas database without creating test records. Local preview health returned 200.
+
+Limitations: No budgets, receipt uploads, exports, payments, vendor booking, gallery/publishing statistics, live polling or activity feed in this increment. Dashboard uses the currently implemented V1 modules. Lost creation responses require checking the refreshed list before retrying. Deployment remains unverified for this change.
 
 ## Maintaining this record
 

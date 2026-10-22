@@ -1,12 +1,20 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { requireUser } from "@/modules/auth/current-user";
 import { weddingsForPage } from "@/modules/weddings/page-data";
 import { formatWeddingDate, themeNames } from "@/modules/weddings/schema";
 import { WorkspaceHeader } from "@/components/weddings/workspace-header";
 export const metadata = { title: "Your weddings | Plan My Marriage" };
-export default async function WelcomePage() {
+export default async function WelcomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ select?: string }>;
+}) {
   const user = await requireUser();
   const weddings = await weddingsForPage(user.id);
+  const { select } = await searchParams;
+  if (weddings.length === 1 && select !== "1")
+    redirect(`/app/weddings/${weddings[0].id}`);
   return (
     <div className="min-h-screen bg-surface">
       <WorkspaceHeader />

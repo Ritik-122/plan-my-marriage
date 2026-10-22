@@ -11,12 +11,12 @@ export function EventShell({
 }: {
   wedding: WeddingDTO;
   children: React.ReactNode;
-  active?: "events" | "guests" | "team" | "tasks";
+  active?: "events" | "guests" | "team" | "tasks" | "expenses" | "dashboard";
 }) {
   const base = `/app/weddings/${wedding.id}`;
   return (
     <div className="min-h-screen bg-surface lg:pl-60">
-      <aside className="border-b border-outline-variant/30 bg-white p-5 lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-60 lg:flex-col lg:border-r">
+      <aside className="border-b border-outline-variant/30 bg-white p-5 lg:fixed lg:inset-y-0 lg:left-0 lg:overflow-y-auto lg:flex lg:w-60 lg:flex-col lg:border-r">
         <Brand />
         <div className="my-6 rounded-lg bg-surface-container-low p-3">
           <p className="text-xs uppercase tracking-widest text-secondary">
@@ -33,38 +33,29 @@ export function EventShell({
           aria-label="Wedding navigation"
           className="flex flex-wrap gap-2 lg:flex-col"
         >
-          <Link href={base} className="rounded-lg px-4 py-3 text-label-lg">
-            Overview
-          </Link>
+          {(
+            [
+              ["dashboard", "Dashboard", base],
+              ["events", "Events", base + "/events"],
+              ["tasks", "Tasks", base + "/tasks"],
+              ["expenses", "Expenses", base + "/expenses"],
+              ["guests", "Guests", base + "/guests"],
+              ["team", "Team & Access", base + "/team"],
+            ] as const
+          ).map(([key, label, href]) => (
+            <Link
+              key={key}
+              href={href}
+              aria-current={active === key ? "page" : undefined}
+              className={`rounded-lg px-4 py-3 text-label-lg ${active === key ? "bg-primary-container text-white" : "hover:bg-surface-container-low"}`}
+            >
+              {label}
+            </Link>
+          ))}
           <Link
-            href={`${base}/events`}
-            aria-current={active === "events" ? "page" : undefined}
-            className={`rounded-lg px-4 py-3 text-label-lg ${active === "events" ? "bg-primary-container text-white" : ""}`}
+            href="/app?select=1"
+            className="rounded-lg px-4 py-3 text-label-lg"
           >
-            Events
-          </Link>
-          <Link
-            href={`${base}/guests`}
-            aria-current={active === "guests" ? "page" : undefined}
-            className={`rounded-lg px-4 py-3 text-label-lg ${active === "guests" ? "bg-primary-container text-white" : ""}`}
-          >
-            Guests
-          </Link>
-          <Link
-            href={`${base}/team`}
-            aria-current={active === "team" ? "page" : undefined}
-            className={`rounded-lg px-4 py-3 text-label-lg ${active === "team" ? "bg-primary-container text-white" : ""}`}
-          >
-            Team &amp; Access
-          </Link>
-          <Link
-            href={`${base}/tasks`}
-            aria-current={active === "tasks" ? "page" : undefined}
-            className={`rounded-lg px-4 py-3 text-label-lg ${active === "tasks" ? "bg-primary-container text-white" : ""}`}
-          >
-            Tasks
-          </Link>
-          <Link href="/app" className="rounded-lg px-4 py-3 text-label-lg">
             Your weddings
           </Link>
         </nav>

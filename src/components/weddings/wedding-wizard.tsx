@@ -460,7 +460,7 @@ export function WeddingWizard({
               href={`/app/weddings/${created.id}`}
               className={`${buttonClass} inline-block`}
             >
-              Open Wedding Overview →
+              Open Wedding Dashboard →
             </Link>
           </div>
         )}

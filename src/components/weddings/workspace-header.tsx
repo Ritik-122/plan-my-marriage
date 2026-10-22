@@ -6,7 +6,7 @@ export function WorkspaceHeader() {
     <header className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-margin py-6">
       <Brand />
       <div className="flex flex-wrap items-center gap-5">
-        <Link href="/app" className="text-label-lg text-primary">
+        <Link href="/app?select=1" className="text-label-lg text-primary">
           Your weddings
         </Link>
         <SignOutButton />
