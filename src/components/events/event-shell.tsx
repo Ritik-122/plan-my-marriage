@@ -17,6 +17,7 @@ export function EventShell({
     | "team"
     | "tasks"
     | "expenses"
+    | "gallery"
     | "dashboard"
     | "website";
 }) {
@@ -47,6 +48,7 @@ export function EventShell({
               ["tasks", "Tasks", base + "/tasks"],
               ["expenses", "Expenses", base + "/expenses"],
               ["guests", "Guests", base + "/guests"],
+              ["gallery", "Gallery", base + "/gallery"],
               ["website", "Wedding Website", base + "/website"],
               ["team", "Team & Access", base + "/team"],
             ] as const

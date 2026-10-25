@@ -74,7 +74,7 @@ export async function deleteRecord(weddingId: string, eventId: string) {
     if (!event) throw missingEvent();
     const db = mongoose.connection.db!;
     const filter = { weddingId: event.weddingId, eventId: event._id };
-    // Storage-object deletion is not implemented; refuse to orphan photo objects.
+    // Photos must be explicitly deleted through the gallery before removing an event.
     if (
       await db
         .collection("photos")
@@ -83,7 +83,7 @@ export async function deleteRecord(weddingId: string, eventId: string) {
       throw new HttpError(
         409,
         "INVALID_STATE",
-        "This event has photos. Photo cleanup must be completed before deleting it.",
+        "This event has photos. Delete them from the gallery before deleting the event.",
       );
     await db.collection("eventGuests").deleteMany(filter, { session });
     await db

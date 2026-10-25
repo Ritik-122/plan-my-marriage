@@ -25,9 +25,12 @@
     "db:invitation-indexes": "node scripts/invitation-indexes.mjs --apply",
     "db:team-indexes": "node scripts/team-indexes.mjs --apply",
     "db:task-indexes": "node scripts/task-indexes.mjs --apply",
-    "db:expense-indexes": "node scripts/expense-indexes.mjs --apply"
+    "db:expense-indexes": "node scripts/expense-indexes.mjs --apply",
+    "db:photo-indexes": "node scripts/photo-indexes.mjs --apply"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1155.0",
+    "@aws-sdk/s3-request-presigner": "3.1155.0",
     "bcryptjs": "3.0.3",
     "jose": "6.2.12",
     "mongoose": "9.10.2",

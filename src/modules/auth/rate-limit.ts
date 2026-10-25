@@ -133,3 +133,11 @@ export async function limitExpenseRequests(userId: string) {
   await connectMongo();
   await increment(userId, "expenses:mutate", 120);
 }
+export async function limitGalleryRequests(userId: string, presign: boolean) {
+  await connectMongo();
+  await increment(
+    userId,
+    presign ? "gallery:presign" : "gallery:mutate",
+    presign ? 60 : 180,
+  );
+}

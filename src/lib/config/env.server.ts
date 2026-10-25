@@ -92,3 +92,66 @@ export function getSessionConfig(environment: Environment = process.env) {
   }
   return config;
 }
+
+export function getMediaConfig(environment: Environment = process.env) {
+  const config = parseConfig(
+    z.object({
+      R2_ACCOUNT_ID: z.string().regex(/^[a-f0-9]{32}$/i),
+      R2_ACCESS_KEY_ID: z.string().min(1),
+      R2_SECRET_ACCESS_KEY: z.string().min(1),
+      R2_BUCKET_NAME: z.string().regex(/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/),
+      MEDIA_CDN_BASE_URL: z.url(),
+      MAX_IMAGE_BYTES: z.coerce
+        .number()
+        .int()
+        .min(1)
+        .max(10485760)
+        .default(10485760),
+    }),
+    environment,
+    "photo storage",
+  );
+  const local =
+    !environment.VERCEL &&
+    ["localhost", "127.0.0.1"].includes(
+      new URL(getAppConfig(environment).APP_BASE_URL).hostname,
+    );
+  const cdn = new URL(config.MEDIA_CDN_BASE_URL);
+  const endpoint =
+    environment.R2_ENDPOINT ||
+    `https://${config.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
+  let target: URL;
+  try {
+    target = new URL(endpoint);
+  } catch {
+    throw new ConfigurationError("photo storage", ["R2_ENDPOINT"]);
+  }
+  if (
+    cdn.username ||
+    cdn.password ||
+    cdn.search ||
+    cdn.hash ||
+    (!local && cdn.protocol !== "https:") ||
+    !["http:", "https:"].includes(cdn.protocol) ||
+    cdn.hostname.endsWith("example.com")
+  )
+    throw new ConfigurationError("photo storage", ["MEDIA_CDN_BASE_URL"]);
+  if (
+    environment.R2_ENDPOINT &&
+    !(
+      local &&
+      target.protocol === "http:" &&
+      target.hostname === "127.0.0.1" &&
+      !target.username &&
+      !target.password
+    )
+  )
+    throw new ConfigurationError("photo storage", [
+      "R2_ENDPOINT (local fixtures only)",
+    ]);
+  return {
+    ...config,
+    endpoint,
+    MEDIA_CDN_BASE_URL: config.MEDIA_CDN_BASE_URL.replace(/\/$/, ""),
+  };
+}

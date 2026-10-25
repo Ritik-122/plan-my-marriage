@@ -1773,6 +1773,18 @@ Expense mutations lock the parent wedding and recheck Admin/Manager membership i
 
 Dashboard queries are wedding-scoped counts, aggregates and bounded event/task lists. Guest record counts remain separate from RSVP assignment counts. No new dashboard collection, activity model or fabricated statistics are introduced.
 
+## Implemented organizer gallery persistence
+
+The `photos` collection now stores weddingId, nullable eventId, purpose (EVENT_GALLERY/WEDDING_GALLERY), server-generated objectKey, originalFileName, mimeType, sizeBytes, uploadedByType, uploadedByUserId and timestamps. This organizer increment always sets the uploader from the current authenticated membership; browser-supplied uploader information is rejected. Dimensions/EXIF, guest uploader fields and cover/couple purposes are not synthesized.
+
+`photoUploadIntents` records weddingId, nullable eventId, userId, purpose, final objectKey, stagingKey, originalFileName, MIME, size, state (PENDING/FINALIZED/DELETED), expiresAt and timestamps. Intents expire after 24 hours via TTL. They bind finalization to the original uploader and metadata. Finalized photos remain idempotently retrievable through finalize even after intent expiry; deleted photos cannot be recreated by replaying an intent.
+
+`npm run db:photo-indexes` creates unique objectKey indexes on both collections; photo indexes on (weddingId, createdAt desc, _id desc), (weddingId, eventId, createdAt desc), and (weddingId, purpose, createdAt desc); and an expiresAt TTL index on intents. Presigning refuses to work without the required unique indexes. Index creation never creates sample photo records.
+
+Mutations lock the parent Wedding by incrementing __v, then recheck current ADMIN/MANAGER membership inside a transaction, serializing with team removal and other photo writes. Event-linked uploads also write the parent event to serialize with event deletion. Finalization verifies and copies the immutable staging object inside this transaction before inserting metadata; deletion removes the object before deleting metadata. Storage requests have bounded timeouts and no automatic SDK retry; transaction retries are safe because copy uses the same object key and object deletion is idempotent.
+
+MongoDB and R2 do not share an atomic commit. Uncertain outcomes are repaired by retry where possible; crash failures can leave orphaned objects or metadata for a removed object. There is no background reconciliation worker. A one-day R2 lifecycle rule on `staging/` is required for abandoned/retained upload cleanup; it must never target permanent `weddings/` objects. See R2-SETUP.md for the operating procedure and CDN deletion caveats.
+
 ## Implemented website publishing persistence
 
 Publishing reuses Wedding.website.isPublished (default false), the existing immutable unique slug, theme and description fields. There are no new collections or indexes. Strict nested PATCH updates map to `$set: { "website.isPublished": value }`, retaining other website flags. All Wedding updates now run inside a transaction: increment Wedding.__v to serialize with team membership changes, re-check current ADMIN/MANAGER membership, and roll back on lost access.

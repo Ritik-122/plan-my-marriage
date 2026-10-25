@@ -14,6 +14,8 @@ import { applyTeamIndexes } from "../../scripts/team-indexes.mjs";
 import { applyTaskIndexes } from "../../scripts/task-indexes.mjs";
 
 import { applyExpenseIndexes } from "../../scripts/expense-indexes.mjs";
+import { applyPhotoIndexes } from "../../scripts/photo-indexes.mjs";
+import { startR2Fixture } from "./r2-mock.mjs";
 
 export default async function setup() {
   // Never reuse an existing server: it could be connected to a real database.
@@ -28,6 +30,8 @@ export default async function setup() {
     replSet: { count: 1, storageEngine: "wiredTiger" },
   });
   let next;
+  const media = await startR2Fixture();
+  process.env.PMM_TEST_MEDIA_URL = media.url;
   process.env.PMM_TEST_MONGODB_URI = mongo.getUri();
   process.env.PMM_TEST_SESSION_SECRET = randomBytes(48).toString("base64url");
   async function cleanup() {
@@ -38,6 +42,7 @@ export default async function setup() {
     }
     await mongoose.disconnect();
     await mongo.stop();
+    await media.close();
   }
   try {
     await mongoose.connect(mongo.getUri(), {
@@ -52,6 +57,7 @@ export default async function setup() {
     await applyTeamIndexes(mongoose.connection.db);
     await applyTaskIndexes(mongoose.connection.db);
     await applyExpenseIndexes(mongoose.connection.db);
+    await applyPhotoIndexes(mongoose.connection.db);
     await mongoose.disconnect();
     next = spawn(
       process.execPath,
@@ -80,6 +86,13 @@ export default async function setup() {
           EMAIL_REPLY_TO: "",
           VERCEL: "",
           LOG_LEVEL: "silent",
+          R2_ACCOUNT_ID: "a".repeat(32),
+          R2_ACCESS_KEY_ID: "fixture-access-key",
+          R2_SECRET_ACCESS_KEY: "fixture-secret-key",
+          R2_BUCKET_NAME: "pmm-test",
+          R2_ENDPOINT: media.url,
+          MEDIA_CDN_BASE_URL: `${media.url}/media`,
+          MAX_IMAGE_BYTES: "10485760",
         },
       },
     );

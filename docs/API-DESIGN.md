@@ -3445,6 +3445,21 @@ GET /api/v1/weddings/:weddingId/dashboard now returns countdown, task totals, re
 
 /app sends a member with exactly one wedding to its dashboard; zero/multiple weddings show the wedding chooser. /app?select=1 always shows the chooser, allowing switching and additional wedding creation. Existing invitation return paths remain unchanged. /app/weddings/:weddingId is now the dashboard with shared workspace navigation.
 
+## Implemented organizer photo gallery increment
+
+All routes below require current ADMIN/MANAGER membership in the wedding. Mutations check same origin; responses are no-store. Unauthenticated requests return 401, inaccessible weddings and photos return generic 404. Strict validation rejects unknown fields. No guest upload capability is enabled in this increment.
+
+- `POST /api/v1/weddings/:weddingId/uploads/presign`: accepts `{ purpose, eventId?, fileName, mimeType, sizeBytes }`. Purpose is EVENT_GALLERY (same-wedding event required) or WEDDING_GALLERY (event omitted/null). JPEG/PNG/WebP only; positive integer size up to MAX_IMAGE_BYTES (maximum 10 MiB), filename 1–255 characters without control characters. Returns data `{ objectKey, uploadUrl, expiresInSeconds: 300, requiredHeaders }`. The final objectKey is server-assigned; the URL permits one create-only PUT to a separate staging key, with signed content type and length. Do not log or persist the URL in client analytics.
+- `POST /api/v1/weddings/:weddingId/uploads/finalize`: accepts `{ purpose, eventId?, objectKey, originalFileName }`; these must match the caller's upload intent. Server verifies the stored size, MIME and magic signature, then conditionally copies to the permanent key and creates metadata. Returns 201 with data `{ photo }`. Repeating the same confirmed intent returns the same photo, without another copy or record. Missing staging returns 409 UPLOAD_NOT_FOUND; expired/deleted/foreign intents return 404. Mismatched metadata/file bytes return 400 UPLOAD_INVALID. Provider failures return sanitized 503, without claiming success.
+- `GET /api/v1/weddings/:weddingId/photos`: optional eventId (or `general`), purpose, uploadedByType, cursor, limit (default24/max100); newest createdAt/id first. Data is a photo array; meta.nextCursor is opaque/null.
+- `GET /api/v1/weddings/:weddingId/photos/summary`: data `{ count, sizeBytes, byEvent: [{eventId, count}] }`, covering the entire wedding independently of list filters.
+- `GET /api/v1/weddings/:weddingId/photos/:photoId`: data is the photo DTO.
+- `DELETE /api/v1/weddings/:weddingId/photos/:photoId`: deletes the permanent R2 object before metadata, marks its intent deleted, returns 204. Provider failure retains metadata for retry. A deleted intent cannot recreate a photo. Event deletion refuses with 409 while the event has photos, requiring explicit gallery cleanup first.
+
+Photo DTO fields: id, eventId (nullable), purpose, originalFileName, url, mimeType, sizeBytes, uploadedByType and createdAt. No storage credentials, objectKey, uploader user IDs or capability tokens are exposed by read DTOs. The CDN URL itself is public to anyone with it, independent of website publishing and event visibility. No public gallery endpoint or website gallery integration is included yet.
+
+Presigning is limited to 60/user/15 minutes; other gallery mutations to 180/user/15 minutes. Limits use the existing Mongo-backed counters. Network retries from the open upload dialog first finalize the previous intent, then start a fresh upload only when that intent/source is unavailable. Closing/reloading discards the local queue; inspect the refreshed gallery before reselecting files. No automatic background retries or cross-device upload recovery are implemented.
+
 ## Implemented website publishing increment
 
 `PATCH /api/v1/weddings/:weddingId` now accepts the strict nested object `website: { isPublished: boolean }`, in addition to existing editable wedding fields. Empty objects, non-booleans, unknown website fields and immutable slugs are rejected. Creation still starts unpublished and rejects supplied website settings. Admins and Managers may publish/unpublish; origin checks and the existing wedding-update rate limit apply. Updates set only `website.isPublished`, preserving showGallery/showLivestream defaults without exposing those future controls.

@@ -173,6 +173,14 @@ Vercel is the initial target. Select this repository root, the Next.js preset, a
 
 Review stable patch/security releases before deployment. A lockfile makes builds reproducible; it does not replace dependency maintenance. Production database indexes must later be applied explicitly, not on application boot.
 
+## Organizer photo gallery
+
+Open **Gallery** in the wedding sidebar to upload JPEG, PNG or WebP photos, filter by celebration, view full-size images and delete with confirmation. Admins and Managers share these controls. Files are limited to 10 MB each (or a lower configured limit), with 20 per browser batch. Upload queues show progress and retry individual failures without duplicating a confirmed upload.
+
+Configure Cloudflare R2, the media domain, CORS and staging lifecycle using [R2 setup](docs/R2-SETUP.md). Run `npm run db:photo-indexes` for each database. Missing media settings disable uploads without preventing other features from running. Tests use a local storage fixture and disposable MongoDB; real R2 uploads still need configuration and verification.
+
+Direct photo URLs are public, including for invite-only events. Uploaded images retain their original metadata. They are not automatically displayed on the guest website. Guest QR uploads, public gallery integration, cover/couple photo selection, face tagging, RAW files, storage plans and bulk actions are outside this increment.
+
 ## Team access and email invitations
 
 - Open a wedding's **Team & Access** screen. Admins invite a partner as an equal Admin or invite a Manager, resend/revoke invitations, and remove Managers. Members can read the team directory; only Admins see pending invitation emails. No Admin removal/demotion or wedding deletion is implemented.
